@@ -54,4 +54,4 @@ jobs:
       - name: Warm up the Go module proxy (triggers pkg.go.dev indexing)
         run: |
           GOPROXY=https://proxy.golang.org GOFLAGS=-mod=mod \
-            go list -m "github.com/manorfm/toToggles/totoggle_go@${{ steps.version.outputs.version }}" || true
+            go list -m "github.com/manorfm/toToggle/totoggle_go@${{ steps.version.outputs.version }}" || true

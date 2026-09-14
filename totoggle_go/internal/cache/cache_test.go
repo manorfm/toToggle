@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 func mustPath(t *testing.T, raw string) toggle.Path {

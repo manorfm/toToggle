@@ -3,7 +3,7 @@ package strategy
 import (
 	"strings"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // MatchListEvaluator implements the "comma-separated allowlist, exact trimmed match" shape

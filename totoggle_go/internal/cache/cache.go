@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // Stats is a point-in-time snapshot of cache health, for the Client's observability getters.

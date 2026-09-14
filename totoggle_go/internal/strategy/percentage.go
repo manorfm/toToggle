@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"strconv"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // PercentageEvaluator activates a configured percentage of evaluations. With a key (a stable

@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	totoggle "github.com/manorfm/toToggles/totoggle_go"
-	"github.com/manorfm/toToggles/totoggle_go/httpcontext"
+	totoggle "github.com/manorfm/toToggle/totoggle_go"
+	"github.com/manorfm/toToggle/totoggle_go/httpcontext"
 )
 
 const (

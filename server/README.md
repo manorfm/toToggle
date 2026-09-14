@@ -1,8 +1,10 @@
 # ToToogle
 
-[![server-go](https://github.com/manorfm/toToggles/actions/workflows/server-go.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/server-go.yml)
+[![server-go](https://github.com/manorfm/toToggle/actions/workflows/server-go.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/server-go.yml)
 
 A comprehensive feature toggle management platform built with Go and modern web technologies, designed for enterprise-scale feature flag management with robust user access controls and team collaboration.
+
+See the [project landing page](https://manorfm.github.io/toToggle/) for an overview of all 3 client SDKs.
 
 ## 🚀 Features
 

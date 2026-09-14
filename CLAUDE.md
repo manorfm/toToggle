@@ -5,7 +5,7 @@ independente (stack, dependências e ciclo de vida próprios), mas compartilham 
 de API.
 
 ```
-toToggles/
+toToggle/
 ├── server/           # Monólito Go (Gin + GORM + SQLite) — API + frontend autocontido
 ├── totoggle_java/     # Client library Java/Kotlin (consome a API pública via secret key)
 ├── stress-tests/      # Testes de carga (Gatling/Kotlin) contra o server

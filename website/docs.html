@@ -19,7 +19,7 @@
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap"><a class="brand" href="index.html" aria-label="Página inicial do toToggle"><img class="brand-mark" src="favicon.svg" alt="" /><span class="brand-name">to<b>Toggle</b></span></a><nav><a href="index.html">Início</a><a href="docs.html" aria-current="page">Documentação</a><a href="api.html">API docs</a><a href="https://github.com/manorfm/toToggles" target="_blank" rel="noopener">GitHub</a></nav></div></header>
+<header class="top"><div class="wrap"><a class="brand" href="index.html" aria-label="Página inicial do toToggle"><img class="brand-mark" src="favicon.svg" alt="" /><span class="brand-name">to<b>Toggle</b></span></a><nav><a href="index.html">Início</a><a href="docs.html" aria-current="page">Documentação</a><a href="api.html">API docs</a><a href="https://github.com/manorfm/toToggle" target="_blank" rel="noopener">GitHub</a></nav></div></header>
 
 <main class="wrap">
   <div class="hero"><p class="eyebrow">Documentação</p><h1>Execute o toToggle com Docker</h1><p>Inicie o servidor sem instalar Go, Node ou baixar o código. Depois configure a organização, as permissões e as bibliotecas clientes pela interface administrativa.</p></div>
@@ -170,7 +170,7 @@ boolean enabled = client.isActive("checkout.payments.card");</code></pre><button
       </section>
 
       <section id="go-sdk">
-        <h2>Go</h2><div class="code-block"><span class="code-label">Terminal</span><pre><code>go get github.com/manorfm/toToggles/totoggle_go<span data-version-suffix="go"></span></code></pre><button class="copy-button" type="button" aria-label="Copiar instalação Go" data-tooltip="Copiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></div>
+        <h2>Go</h2><div class="code-block"><span class="code-label">Terminal</span><pre><code>go get github.com/manorfm/toToggle/totoggle_go<span data-version-suffix="go"></span></code></pre><button class="copy-button" type="button" aria-label="Copiar instalação Go" data-tooltip="Copiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></div>
         <div class="code-block"><span class="code-label">Go</span><pre><code>config, err := totoggle.NewConfig(
     "checkout",
     os.Getenv("TOTOGGLE_URL"),
@@ -203,7 +203,7 @@ client.shutdown();</code></pre><button class="copy-button" type="button" aria-la
     </article>
   </div>
 </main>
-<footer><div class="wrap">Criado por <a href="https://github.com/manorfm" target="_blank" rel="noopener">Manoel Medeiros</a> · <a href="https://github.com/manorfm/toToggles" target="_blank" rel="noopener">Código no GitHub</a></div></footer>
+<footer><div class="wrap">Criado por <a href="https://github.com/manorfm" target="_blank" rel="noopener">Manoel Medeiros</a> · <a href="https://github.com/manorfm/toToggle" target="_blank" rel="noopener">Código no GitHub</a></div></footer>
 <script>
   document.querySelectorAll('.copy-button').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -225,7 +225,7 @@ client.shutdown();</code></pre><button class="copy-button" type="button" aria-la
 
   Promise.all([
     fetch('releases.json').then((response) => response.ok ? response.json() : {}),
-    fetch('https://api.github.com/repos/manorfm/toToggles/releases?per_page=100').then((response) => response.ok ? response.json() : [])
+    fetch('https://api.github.com/repos/manorfm/toToggle/releases?per_page=100').then((response) => response.ok ? response.json() : [])
   ])
     .then(([fallbackVersions, releases]) => {
       Object.entries(fallbackVersions).forEach(([component, version]) => applyVersion(component, version));

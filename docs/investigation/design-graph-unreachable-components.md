@@ -9,8 +9,8 @@
 > e a seção "O que foi confirmado depois do conserto" no final documenta o resultado observado.
 >
 > Prompt original, escrito para outro agente investigar e propor melhorias no MCP `design-graph`,
-> depois de uma sessão de trabalho no monorepo `toToggles`
-> (`/Users/manoelmedeiros/Workspace/toToggles`) em que várias tentativas de extrair o JSX de
+> depois de uma sessão de trabalho no monorepo `toToggle`
+> (`/Users/manoelmedeiros/Workspace/toToggle`) em que várias tentativas de extrair o JSX de
 > componentes específicos do protótipo carregado (`toToggle`) falhavam, mesmo com as ferramentas
 > mais completas (`get_full_jsx`), enquanto outros componentes aparentemente equivalentes em
 > profundidade/contexto funcionavam perfeitamente. Isso estava relacionado ao Achado 1 do documento

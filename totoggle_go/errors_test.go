@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/serverapi"
+	"github.com/manorfm/toToggle/totoggle_go/internal/serverapi"
 )
 
 // ErrAuthentication must be the exact value internal/serverapi returns — internal/ is not

@@ -1,14 +1,14 @@
 # ToToggle
 
-[![server-go](https://github.com/manorfm/toToggles/actions/workflows/server-go.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/server-go.yml)
-[![totoggle-java](https://github.com/manorfm/toToggles/actions/workflows/totoggle-java.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/totoggle-java.yml)
-[![totoggle-go](https://github.com/manorfm/toToggles/actions/workflows/totoggle-go.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/totoggle-go.yml)
-[![totoggle-node](https://github.com/manorfm/toToggles/actions/workflows/totoggle-node.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/totoggle-node.yml)
-[![frontend-web](https://github.com/manorfm/toToggles/actions/workflows/frontend-web.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/frontend-web.yml)
+[![server-go](https://github.com/manorfm/toToggle/actions/workflows/server-go.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/server-go.yml)
+[![totoggle-java](https://github.com/manorfm/toToggle/actions/workflows/totoggle-java.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/totoggle-java.yml)
+[![totoggle-go](https://github.com/manorfm/toToggle/actions/workflows/totoggle-go.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/totoggle-go.yml)
+[![totoggle-node](https://github.com/manorfm/toToggle/actions/workflows/totoggle-node.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/totoggle-node.yml)
+[![frontend-web](https://github.com/manorfm/toToggle/actions/workflows/frontend-web.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/frontend-web.yml)
 [![Server version](https://img.shields.io/docker/v/manorfm/totoggle?sort=semver&label=server)](https://hub.docker.com/r/manorfm/totoggle/tags)
 [![Java version](https://img.shields.io/maven-central/v/io.github.manorfm/totoggle_java?label=java)](https://central.sonatype.com/artifact/io.github.manorfm/totoggle_java)
 [![Node version](https://img.shields.io/npm/v/totoggle-node?label=node)](https://www.npmjs.com/package/totoggle-node)
-[![Go module](https://img.shields.io/badge/go-module-00ADD8?logo=go)](https://pkg.go.dev/github.com/manorfm/toToggles/totoggle_go)
+[![Go module](https://img.shields.io/badge/go-module-00ADD8?logo=go)](https://pkg.go.dev/github.com/manorfm/toToggle/totoggle_go)
 [![License](https://img.shields.io/badge/license-ToToggle%201.0-blue)](LICENSE)
 
 A feature flag (feature toggle) management platform: a Go server with a role-based admin UI, team
@@ -43,11 +43,11 @@ them with cascading validation and 7 activation rule types.
 ## 🏗️ Architecture
 
 ```
-toToggles/
+toToggle/
 ├── server/           # Go server: REST API + role-based admin UI (React/Vite), same-origin,
 │                      # single SQLite-backed binary — see server/README.md and server/CLAUDE.md
 ├── totoggle_java/     # Kotlin/Java client library (Gradle)
-├── totoggle_go/       # Go client library (go get github.com/manorfm/toToggles/totoggle_go)
+├── totoggle_go/       # Go client library (go get github.com/manorfm/toToggle/totoggle_go)
 ├── totoggle_node/     # Node.js/TypeScript client library (npm)
 ├── stress-tests/      # Gatling/Kotlin load tests against the server's public toggle API
 └── docs/
@@ -137,7 +137,7 @@ The Kotlin/Java example above is the original client; **Go and Node/TypeScript a
 complete** (same cascading-validation semantics, all 7 rule types, offline mode, observability
 hooks) — see each one's own README for its language-idiomatic API and a full usage example:
 
-- **Go**: [`totoggle_go/README.md`](totoggle_go/README.md) — `go get github.com/manorfm/toToggles/totoggle_go`
+- **Go**: [`totoggle_go/README.md`](totoggle_go/README.md) — `go get github.com/manorfm/toToggle/totoggle_go`
 - **Node/TypeScript**: [`totoggle_node/README.md`](totoggle_node/README.md) — `npm install totoggle-node`
 
 ## 🌟 Key Features
@@ -331,8 +331,8 @@ open an issue first vs. going straight to a PR, and how to run each component's 
 
 ```bash
 # Clone the repository
-git clone https://github.com/manorfm/toToggles.git
-cd toToggles
+git clone https://github.com/manorfm/toToggle.git
+cd toToggle
 
 # Setup server
 cd server
@@ -354,7 +354,7 @@ internal and evaluation use is unrestricted). See the [LICENSE](LICENSE) file fo
 
 All 3 client libraries are published to their official registries:
 
-- **Go**: `go get github.com/manorfm/toToggles/totoggle_go` — no registry needed, resolves off the `totoggle_go/v*` tag directly.
+- **Go**: `go get github.com/manorfm/toToggle/totoggle_go` — no registry needed, resolves off the `totoggle_go/v*` tag directly.
 - **Java/Kotlin**: [`io.github.manorfm:totoggle_java:1.0.0`](https://repo1.maven.org/maven2/io/github/manorfm/totoggle_java/1.0.0/) on Maven Central.
 - **Node/TypeScript**: [`totoggle-node@1.0.0`](https://www.npmjs.com/package/totoggle-node) on npm.
 
@@ -363,14 +363,14 @@ Each library ships from this monorepo with its own CI (test-on-push) and a relea
 `totoggle_java/vX.Y.Z`, `totoggle_node/vX.Y.Z`) — it builds, tests, packages, publishes a GitHub
 Release, and (Java/Node) publishes to the registry via Maven Central / npm Trusted Publishing.
 
-See **[the project landing page](https://manorfm.github.io/toToggles/)** for an overview of all 3
+See **[the project landing page](https://manorfm.github.io/toToggle/)** for an overview of all 3
 SDKs.
 
 ## 📞 Support
 
-- **Documentation**: [Wiki](https://github.com/manorfm/toToggles/wiki)
-- **Issues**: [GitHub Issues](https://github.com/manorfm/toToggles/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/manorfm/toToggles/discussions)
+- **Documentation**: [Wiki](https://github.com/manorfm/toToggle/wiki)
+- **Issues**: [GitHub Issues](https://github.com/manorfm/toToggle/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/manorfm/toToggle/discussions)
 
 ---
 

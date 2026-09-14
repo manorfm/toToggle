@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	totoggle "github.com/manorfm/toToggles/totoggle_go"
+	totoggle "github.com/manorfm/toToggle/totoggle_go"
 )
 
 type Options struct {

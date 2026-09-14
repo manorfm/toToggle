@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // stubEvaluator is a minimal Evaluator used only to prove Registry dispatch — the real

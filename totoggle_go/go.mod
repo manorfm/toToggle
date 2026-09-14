@@ -1,4 +1,4 @@
-module github.com/manorfm/toToggles/totoggle_go
+module github.com/manorfm/toToggle/totoggle_go
 
 go 1.23
 

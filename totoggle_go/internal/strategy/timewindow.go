@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // TimeWindowEvaluator matches a "HH:mm-HH:mm" 24h daily window against the current time. Needs

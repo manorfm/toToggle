@@ -1,9 +1,11 @@
 # ToToggle - Complete Feature Flag Management Platform
 
-[![server-go](https://github.com/manorfm/toToggles/actions/workflows/server-go.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/server-go.yml)
-[![totoggle-java](https://github.com/manorfm/toToggles/actions/workflows/totoggle-java.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/totoggle-java.yml)
+[![server-go](https://github.com/manorfm/toToggle/actions/workflows/server-go.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/server-go.yml)
+[![totoggle-java](https://github.com/manorfm/toToggle/actions/workflows/totoggle-java.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/totoggle-java.yml)
 
 A comprehensive feature toggle management platform consisting of a Go-based server and a Java/Kotlin client library. This solution provides enterprise-scale feature flag management with robust user access controls, team collaboration, and client libraries for easy integration.
+
+See the [project landing page](https://manorfm.github.io/toToggle/) for an overview of all 3 SDKs.
 
 ## 🏗️ Project Structure
 

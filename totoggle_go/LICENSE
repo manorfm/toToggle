@@ -23,7 +23,7 @@ evaluation use.
 10.2 Attribution requirement. Any Commercial Use of the Software must include clear and
 reasonably visible attribution to the original ToToggle project, in at least one of: the
 product's "About"/"Credits"/"Acknowledgements" section, its public documentation, or its NOTICE
-file — stating that it uses ToToggle and linking to https://github.com/manorfm/toToggles. The
+file — stating that it uses ToToggle and linking to https://github.com/manorfm/toToggle. The
 attribution must remain intact through redistribution; you may not represent the Software, or a
 derivative of it, as your own original work in a commercial context.
 
@@ -229,7 +229,7 @@ contact the copyright holder to discuss an alternative arrangement.
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       https://github.com/manorfm/toToggles/blob/main/LICENSE
+       https://github.com/manorfm/toToggle/blob/main/LICENSE
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,

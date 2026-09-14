@@ -1,6 +1,6 @@
 # totoggle-node
 
-[![totoggle-node](https://github.com/manorfm/toToggles/actions/workflows/totoggle-node.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/totoggle-node.yml)
+[![totoggle-node](https://github.com/manorfm/toToggle/actions/workflows/totoggle-node.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/totoggle-node.yml)
 
 Node.js/TypeScript client library for [ToToggle](../README.md): fetches an application's toggle
 set from the server via a secret key, caches it in memory, and evaluates `isActive`
@@ -10,6 +10,8 @@ TypeScript/Node idioms (`Promise` instead of exceptions/error returns, typed `Er
 instead of Go sentinels or Kotlin's checked exceptions, an options object instead of a
 builder/functional options, an interface with optional methods instead of Go's 3-interfaces
 workaround).
+
+See the [project landing page](https://manorfm.github.io/toToggle/) for an overview of all 3 SDKs.
 
 ## Install
 

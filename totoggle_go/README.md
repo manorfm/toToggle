@@ -1,6 +1,6 @@
 # totoggle_go
 
-[![totoggle-go](https://github.com/manorfm/toToggles/actions/workflows/totoggle-go.yml/badge.svg)](https://github.com/manorfm/toToggles/actions/workflows/totoggle-go.yml)
+[![totoggle-go](https://github.com/manorfm/toToggle/actions/workflows/totoggle-go.yml/badge.svg)](https://github.com/manorfm/toToggle/actions/workflows/totoggle-go.yml)
 
 Go client library for [ToToggle](../README.md): fetches an application's toggle set from the
 server via a secret key, caches it in memory, and evaluates `IsActive`/`IsActiveContext` entirely from
@@ -9,10 +9,12 @@ that cache — no network access on the evaluation hot path. Same product semant
 exceptions, functional options instead of a builder, `context.Context` on network operations,
 small segregated interfaces instead of one monolithic listener).
 
+See the [project landing page](https://manorfm.github.io/toToggle/) for an overview of all 3 SDKs.
+
 ## Install
 
 ```bash
-go get github.com/manorfm/toToggles/totoggle_go
+go get github.com/manorfm/toToggle/totoggle_go
 ```
 
 ## Usage
@@ -24,7 +26,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/manorfm/toToggles/totoggle_go"
+	"github.com/manorfm/toToggle/totoggle_go"
 )
 
 func main() {
@@ -102,6 +104,75 @@ unparseable IP, or a malformed time window all fail closed to `false` rather tha
 feature-flag check should never be able to panic a caller's request path.
 
 ## ToggleContextResolver and HTTP middleware
+
+Every contextual rule (every type except `time`) needs one value from your application at
+evaluation time, named by the rule's `context_key`. **`context_key` is not data — it's the name of
+a value your code must supply**, not something you configure once and forget:
+
+| `context_key` you'll see | Rule type(s) | What value to return |
+|---|---|---|
+| `user_id` | `user_id` | The authenticated user's ID for this request. |
+| `rollout_key` | `percentage` | Any durable per-user identity (often the same value as `user_id`) — never something that can change between two requests from the same person, or bucketing stops being consistent for them. |
+| `cohort` | `cohort` | A deployment-ring label your own rollout process assigns, e.g. `"canary"`. |
+| `attributes.<name>` | `attribute`, `percentage` | Whatever your application calls `<name>` — a plan tier, an experiment group, anything. `<name>` is chosen by whoever configured the rule on the server; your resolver must answer for that exact name. |
+| `ip` / `country` | `ip`, `country` | Never yours to set directly — see "Why `httpcontext` exists anyway" below. |
+
+The client's entire dependency on your application is this 2-method interface (`context.go`):
+
+```go
+type ToggleContextResolver interface {
+    Resolve(ctx context.Context, key string) (value string, ok bool)
+}
+```
+
+`key` is the rule's `context_key` (`"user_id"`, `"attributes.plan"`, ...); you return the value
+for *this* request, or `ok=false` if it isn't available (the rule then fails closed to `false`).
+You can implement this directly — no middleware, no other package from this module required:
+
+```go
+type myResolver struct{}
+
+func (myResolver) Resolve(ctx context.Context, key string) (string, bool) {
+    switch key {
+    case "user_id", "rollout_key":
+        id, ok := ctx.Value(userIDKey{}).(string) // however you already carry auth state
+        return id, ok
+    case "attributes.plan":
+        plan, ok := ctx.Value(planKey{}).(string)
+        return plan, ok
+    default:
+        return "", false // includes "ip"/"country" — this resolver doesn't support them
+    }
+}
+
+cfg, _ := totoggle.NewConfig(app, url, key, totoggle.WithToggleContextResolver(myResolver{}))
+client := totoggle.New(cfg)
+client.IsActiveContext(request.Context(), "checkout.payments.card")
+```
+
+That's a complete, correct integration for `user_id`/`percentage`/`attribute`/`cohort` rules —
+nothing below this point is required to use them.
+
+### Why `httpcontext` exists anyway
+
+`httpcontext` (used in the example further down) is an optional, ready-made
+`ToggleContextResolver` — not a second thing you must configure on top of the interface above.
+It exists only because `ip` and `country` differ from every other key: they aren't application
+data already sitting in a session or JWT, they have to be read off the raw HTTP request, and doing
+that safely means trusting the right proxy headers. `X-Forwarded-For`/`Forwarded` are supplied by
+the *caller*; honoring them without an explicit allowlist of your own proxies lets any client
+forge its own IP or country and silently bypass an `ip`/`country` rule. That trust logic is
+identical for any Go service regardless of framework — `httpcontext` works off `*http.Request`,
+which every framework built on `net/http` exposes (Gin's `c.Request` included), so it isn't
+guessing your framework, it's operating one level below all of them. It is centralized and tested
+once here instead of every integration re-deriving (and risking getting wrong) the same
+anti-spoofing check.
+
+For `user_id`, `rollout_key`, `cohort`, and `attributes.*`, `httpcontext` does **not** try to
+extract anything itself — it requires exactly the same kind of callback as the minimal example
+above (`ApplicationValues`, below), because that data is inherently application-specific and the
+SDK has no business guessing it. If you don't need `ip`/`country` rules, skip `httpcontext`
+entirely and use a resolver like the one above instead.
 
 Contextual rules are local to the requested toggle; ancestor rules never cascade. Resolve only
 the context key requested by the rule. The included `httpcontext` package reads the socket IP by

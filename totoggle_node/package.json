@@ -7,14 +7,14 @@
   "types": "./dist/index.d.ts",
   "license": "SEE LICENSE IN LICENSE",
   "author": "Manoel Medeiros <manoel.rodrigo@gmail.com>",
-  "homepage": "https://github.com/manorfm/toToggles/tree/main/totoggle_node#readme",
+  "homepage": "https://github.com/manorfm/toToggle/tree/main/totoggle_node#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manorfm/toToggles.git",
+    "url": "git+https://github.com/manorfm/toToggle.git",
     "directory": "totoggle_node"
   },
   "bugs": {
-    "url": "https://github.com/manorfm/toToggles/issues"
+    "url": "https://github.com/manorfm/toToggle/issues"
   },
   "keywords": [
     "feature-flags",

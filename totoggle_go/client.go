@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/cache"
-	"github.com/manorfm/toToggles/totoggle_go/internal/serverapi"
-	"github.com/manorfm/toToggles/totoggle_go/internal/strategy"
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/cache"
+	"github.com/manorfm/toToggle/totoggle_go/internal/serverapi"
+	"github.com/manorfm/toToggle/totoggle_go/internal/strategy"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // staleThresholdIntervals: the cache is considered stale once this many refresh intervals have

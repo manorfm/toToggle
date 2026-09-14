@@ -359,8 +359,8 @@ Para adicionar novos testes ou melhorar existentes:
 
 ## 📞 Suporte
 
-- **Issues:** [GitHub Issues](https://github.com/manorfm/toToggles/issues)
-- **Documentação:** [Wiki do Projeto](https://github.com/manorfm/toToggles/wiki)
+- **Issues:** [GitHub Issues](https://github.com/manorfm/toToggle/issues)
+- **Documentação:** [Wiki do Projeto](https://github.com/manorfm/toToggle/wiki)
 
 ---
 

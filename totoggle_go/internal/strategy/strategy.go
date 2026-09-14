@@ -6,7 +6,7 @@ package strategy
 import (
 	"fmt"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // Evaluator decides whether an activation rule matches a given evaluation key (e.g. the

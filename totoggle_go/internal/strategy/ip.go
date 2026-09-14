@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/toggle"
+	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
 // IPEvaluator matches a candidate IPv4 or IPv6 address against a comma-separated allowlist of

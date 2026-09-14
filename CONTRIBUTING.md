@@ -10,7 +10,7 @@ is branch-protected and requires an approved PR from anyone without write access
 
 ## How to contribute
 
-1. **Have an idea, found a bug, or want a new feature?** [Open an issue](https://github.com/manorfm/toToggles/issues/new)
+1. **Have an idea, found a bug, or want a new feature?** [Open an issue](https://github.com/manorfm/toToggle/issues/new)
    first, describing what you found or want to change — especially before starting non-trivial
    work, so we can agree on the approach before you spend time on it.
 2. **Ready to submit a change?** Fork the repo, branch off `main`, and open a pull request. Small

@@ -89,12 +89,12 @@ mavenPublishing {
     pom {
         name.set("ToToggle Java Client")
         description.set("Java/Kotlin client library for ToToggle feature flag service")
-        url.set("https://github.com/manorfm/toToggles")
+        url.set("https://github.com/manorfm/toToggle")
 
         licenses {
             license {
                 name.set("ToToggle License 1.0")
-                url.set("https://github.com/manorfm/toToggles/blob/main/LICENSE")
+                url.set("https://github.com/manorfm/toToggle/blob/main/LICENSE")
                 comments.set("Apache License 2.0, plus a commercial-use attribution clause (see LICENSE).")
             }
         }
@@ -108,9 +108,9 @@ mavenPublishing {
         }
 
         scm {
-            url.set("https://github.com/manorfm/toToggles")
-            connection.set("scm:git:git://github.com/manorfm/toToggles.git")
-            developerConnection.set("scm:git:ssh://git@github.com/manorfm/toToggles.git")
+            url.set("https://github.com/manorfm/toToggle")
+            connection.set("scm:git:git://github.com/manorfm/toToggle.git")
+            developerConnection.set("scm:git:ssh://git@github.com/manorfm/toToggle.git")
         }
     }
 

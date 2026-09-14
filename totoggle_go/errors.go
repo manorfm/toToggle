@@ -7,7 +7,7 @@ package totoggle
 import (
 	"errors"
 
-	"github.com/manorfm/toToggles/totoggle_go/internal/serverapi"
+	"github.com/manorfm/toToggle/totoggle_go/internal/serverapi"
 )
 
 // ErrInvalidConfig is returned by NewConfig when the supplied values fail validation. Use
