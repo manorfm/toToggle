@@ -60,7 +60,13 @@ create-release-tag:
 		if git rev-parse -q --verify "refs/tags/$$tag" >/dev/null; then echo "Tag $$tag already exists locally"; exit 1; fi; \
 		if git ls-remote --exit-code --tags "$(REMOTE)" "refs/tags/$$tag" >/dev/null 2>&1; then echo "Tag $$tag already exists on $(REMOTE)"; exit 1; fi; \
 		git tag -a "$$tag" -m "toToggle $(COMPONENT) v$(VERSION)"; \
-		git push "$(REMOTE)" "$$tag"
+		git push "$(REMOTE)" "$$tag"; \
+		$(MAKE) sync-release-metadata; \
+		if ! git diff --quiet -- website/releases.json website/index.html README.md server/README.md totoggle_java/README.md; then \
+			git add website/releases.json website/index.html README.md server/README.md totoggle_java/README.md; \
+			git commit -m "chore: synced release metadata for $$tag"; \
+			git push "$(REMOTE)" main; \
+		fi
 
 release-component:
 	@version="$(VERSION)"; \

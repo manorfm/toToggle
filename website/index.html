@@ -104,10 +104,10 @@
       <a class="btn btn-soft" href="https://github.com/manorfm/toToggle" target="_blank" rel="noopener">View on GitHub</a>
     </div>
     <div class="release-badges" aria-label="Latest release versions">
-      <a class="release-badge" href="https://hub.docker.com/r/manorfm/totoggle/tags" target="_blank" rel="noopener"><span>Server</span><strong>v<span data-version="server">1.0.2</span></strong></a>
-      <a class="release-badge" href="https://central.sonatype.com/artifact/io.github.manorfm/totoggle_java" target="_blank" rel="noopener"><span>Java</span><strong>v<span data-version="java">1.0.0</span></strong></a>
+      <a class="release-badge" href="https://hub.docker.com/r/manorfm/totoggle/tags" target="_blank" rel="noopener"><span>Server</span><strong>v<span data-version="server">1.1.0</span></strong></a>
+      <a class="release-badge" href="https://central.sonatype.com/artifact/io.github.manorfm/totoggle_java" target="_blank" rel="noopener"><span>Java</span><strong>v<span data-version="java">2.0.0</span></strong></a>
       <a class="release-badge" href="https://www.npmjs.com/package/totoggle-node" target="_blank" rel="noopener"><span>Node</span><strong>v<span data-version="node">1.0.0</span></strong></a>
-      <a class="release-badge" href="https://github.com/manorfm/toToggle/tree/main/totoggle_go" target="_blank" rel="noopener"><span>Go</span><strong data-version-label="go">latest</strong></a>
+      <a class="release-badge" href="https://github.com/manorfm/toToggle/tree/main/totoggle_go" target="_blank" rel="noopener"><span>Go</span><strong data-version-label="go">v1.0.0</strong></a>
     </div>
   </section>
 
@@ -156,7 +156,7 @@
         <p class="desc">Builder style configuration with OkHttp handling the HTTP layer.</p>
         <p class="install-label">Gradle</p>
         <div class="install-command">
-          <pre><code>implementation("io.github.manorfm:totoggle_java:<span data-version="java">1.0.0</span>")</code></pre>
+          <pre><code>implementation("io.github.manorfm:totoggle_java:<span data-version="java">2.0.0</span>")</code></pre>
           <button class="copy-button" type="button" aria-label="Copy Gradle dependency" data-tooltip="Copy command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
           </button>
@@ -166,7 +166,7 @@
           <pre><code>&lt;dependency&gt;
   &lt;groupId&gt;io.github.manorfm&lt;/groupId&gt;
   &lt;artifactId&gt;totoggle_java&lt;/artifactId&gt;
-  &lt;version&gt;<span data-version="java">1.0.0</span>&lt;/version&gt;
+  &lt;version&gt;<span data-version="java">2.0.0</span>&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
           <button class="copy-button" type="button" aria-label="Copy Maven dependency" data-tooltip="Copy command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
@@ -234,7 +234,11 @@
     });
   });
 
-  const releasePrefixes = { server: 'server/v', java: 'totoggle_java/v', node: 'totoggle_node/v', go: 'totoggle_go/v' };
+  // releases.json is the single source of truth for every version shown on this page — generated
+  // by scripts/sync-release-metadata.sh, which runs automatically after every release (see the
+  // sync-docs job in each .github/workflows/totoggle-*-release.yml) and on every local commit
+  // that bumps a version file (.githooks/pre-commit). No separate GitHub API fetch: two sources
+  // that could disagree is exactly the kind of drift this page kept showing.
   const applyVersion = (component, version) => {
     if (!version) return;
     document.querySelectorAll(`[data-version="${component}"]`).forEach((element) => { element.textContent = version; });
@@ -242,16 +246,10 @@
     document.querySelectorAll(`[data-version-suffix="${component}"]`).forEach((element) => { element.textContent = `@v${version}`; });
   };
 
-  Promise.all([
-    fetch('releases.json').then((response) => response.ok ? response.json() : {}),
-    fetch('https://api.github.com/repos/manorfm/toToggle/releases?per_page=100').then((response) => response.ok ? response.json() : [])
-  ])
-    .then(([fallbackVersions, releases]) => {
-      Object.entries(fallbackVersions).forEach(([component, version]) => applyVersion(component, version));
-      Object.entries(releasePrefixes).forEach(([component, prefix]) => {
-        const release = releases.find((entry) => entry.tag_name.startsWith(prefix));
-        if (release) applyVersion(component, release.tag_name.replace(prefix, ''));
-      });
+  fetch('releases.json')
+    .then((response) => response.ok ? response.json() : {})
+    .then((versions) => {
+      Object.entries(versions).forEach(([component, version]) => applyVersion(component, version));
     })
     .catch(() => {});
 </script>

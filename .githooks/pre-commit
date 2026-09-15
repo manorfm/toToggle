@@ -2,4 +2,4 @@
 set -eu
 
 make sync-release-metadata
-git add website/releases.json
+git add website/releases.json website/index.html README.md server/README.md totoggle_java/README.md

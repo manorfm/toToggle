@@ -93,14 +93,14 @@ password change is completed.
 **Gradle (Kotlin DSL):**
 ```kotlin
 dependencies {
-    implementation(files("path/to/totoggle_java/build/libs/totoggle_java-1.0.0.jar"))
+    implementation(files("path/to/totoggle_java/build/libs/totoggle_java-2.0.0.jar"))
 }
 ```
 
 **Gradle (Groovy):**
 ```groovy
 dependencies {
-    implementation files('path/to/totoggle_java/build/libs/totoggle_java-1.0.0.jar')
+    implementation files('path/to/totoggle_java/build/libs/totoggle_java-2.0.0.jar')
 }
 ```
 
@@ -366,7 +366,7 @@ internal and evaluation use is unrestricted). See the [LICENSE](LICENSE) file fo
 All 3 client libraries are published to their official registries:
 
 - **Go**: `go get github.com/manorfm/toToggle/totoggle_go` — no registry needed, resolves off the `totoggle_go/v*` tag directly.
-- **Java/Kotlin**: [`io.github.manorfm:totoggle_java:1.0.0`](https://repo1.maven.org/maven2/io/github/manorfm/totoggle_java/1.0.0/) on Maven Central.
+- **Java/Kotlin**: [`io.github.manorfm:totoggle_java:2.0.0`](https://repo1.maven.org/maven2/io/github/manorfm/totoggle_java/2.0.0/) on Maven Central.
 - **Node/TypeScript**: [`totoggle-node@1.0.0`](https://www.npmjs.com/package/totoggle-node) on npm.
 
 Each library ships from this monorepo with its own CI (test-on-push) and a release pipeline

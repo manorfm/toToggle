@@ -73,3 +73,45 @@ jobs:
         run: npm ci && npm run build
       - working-directory: totoggle_node
         run: npm publish --access public
+
+  # Regenerates website/releases.json (the landing page's single source of truth for release
+  # badges/install snippets) and the hardcoded version-pin examples in README.md that mirror it.
+  # Runs after build-and-release, not publish-npm (which stays disabled until the one-time manual
+  # first publish) — the docs should reflect what was actually tagged/released either way. See
+  # scripts/sync-release-metadata.sh for the full rationale.
+  sync-docs:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Sync and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ./scripts/sync-release-metadata.sh
+          if git diff --quiet; then
+            echo "Nothing to sync"
+            exit 0
+          fi
+          git add website/releases.json website/index.html README.md server/README.md totoggle_java/README.md
+          git commit -m "chore: synced release metadata for ${{ github.ref_name }}"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo "::error::Failed to push release metadata sync after 3 attempts" >&2
+          exit 1

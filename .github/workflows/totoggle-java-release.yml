@@ -68,3 +68,45 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+
+  # Regenerates website/releases.json (the landing page's single source of truth for release
+  # badges/install snippets) and the hardcoded version-pin examples in README.md/totoggle_java's
+  # own README that mirror it. Runs after build-and-release rather than publish-maven-central —
+  # the docs should reflect what was actually tagged/released regardless of whether the separate
+  # Maven Central publish step succeeds. See scripts/sync-release-metadata.sh for the rationale.
+  sync-docs:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Sync and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ./scripts/sync-release-metadata.sh
+          if git diff --quiet; then
+            echo "Nothing to sync"
+            exit 0
+          fi
+          git add website/releases.json website/index.html README.md server/README.md totoggle_java/README.md
+          git commit -m "chore: synced release metadata for ${{ github.ref_name }}"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo "::error::Failed to push release metadata sync after 3 attempts" >&2
+          exit 1
