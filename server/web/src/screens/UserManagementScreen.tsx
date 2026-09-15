@@ -8,6 +8,7 @@ import { useToast } from "../components/ToastProvider";
 import { UserModal } from "../components/UserModal";
 import { UserRow } from "../components/UserRow";
 import { useAppUser } from "../hooks/useAppUser";
+import { matchesQuery } from "../lib/textSearch";
 import type { User } from "../types/user";
 
 type LoadState = { status: "loading" } | { status: "loaded"; users: User[] } | { status: "error"; message: string };
@@ -84,8 +85,7 @@ export function UserManagementScreen() {
   const allUsers = state.status === "loaded" ? state.users : [];
   const visible = allUsers.filter((u) => {
     if (!search) return true;
-    const q = search.toLowerCase();
-    return u.username.toLowerCase().includes(q) || u.name.toLowerCase().includes(q);
+    return matchesQuery(u.username, search) || matchesQuery(u.name, search);
   });
   const pendingCount = visible.filter((u) => u.status === "pending_first_login").length;
 

@@ -3,22 +3,95 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TeamMembersSection } from "./TeamMembersSection";
 import { ToastProvider } from "./ToastProvider";
+import type { TeamWithCounts } from "../types/team";
 
 function jsonResponse(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
+
+const team: TeamWithCounts = {
+  id: "team1",
+  name: "Payments Squad",
+  description: "Owns payments features",
+  created_at: "",
+  updated_at: "",
+  user_count: 0,
+  application_count: 2,
+};
 
 describe("TeamMembersSection", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("shows an empty state when the team has no members", async () => {
+  // Confirmado contra get_full_jsx("TeamsView"): nome, badge de membros, "Add member" e a
+  // lista/estado vazio vivem no MESMO bloco — não em dois componentes/duas linhas separadas
+  // (essa divisão era a causa raiz da divergência de layout reportada).
+  it("shows the team name and application count in the same header as the member list", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
 
+    expect(screen.getByText("Payments Squad")).toBeInTheDocument();
+    expect(await screen.findByText("2 applications")).toBeInTheDocument();
     expect(await screen.findByText(/no members yet/i)).toBeInTheDocument();
+  });
+
+  it("uses singular wording for a count of one application", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
+
+    render(<TeamMembersSection team={{ ...team, application_count: 1 }} />, { wrapper: ToastProvider });
+
+    expect(await screen.findByText("1 application")).toBeInTheDocument();
+  });
+
+  it("shows the member-count badge derived from the loaded member list, using singular wording for one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(200, { message: "ok", data: [{ team_id: "team1", user_id: "1", is_approver: false, username: "alice", role: "admin" }] })
+      )
+    );
+
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
+
+    expect(await screen.findByText("1 member")).toBeInTheDocument();
+  });
+
+  it("calls onDelete with the team id when the delete button is clicked", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
+    const onDelete = vi.fn();
+    const user = userEvent.setup();
+
+    render(<TeamMembersSection team={team} onDelete={onDelete} />, { wrapper: ToastProvider });
+    await screen.findByText(/no members yet/i);
+
+    await user.click(screen.getByRole("button", { name: /delete team/i }));
+
+    expect(onDelete).toHaveBeenCalledWith("team1");
+  });
+
+  it("does not render a delete button when onDelete is not provided", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
+
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
+    await screen.findByText(/no members yet/i);
+
+    expect(screen.queryByRole("button", { name: /delete team/i })).not.toBeInTheDocument();
+  });
+
+  // Confirmado contra get_full_jsx("TeamsView"): o estado vazio real é `.empty.compact` (ícone
+  // "users" + `.et` "No members yet" + `.ed` com a descrição), não um texto solto — gap real
+  // encontrado nesta auditoria (a versão anterior só tinha o texto, sem a estrutura confirmada).
+  it("shows the confirmed empty-state structure (icon + title + description) when the team has no members", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
+
+    const { container } = render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
+
+    const empty = await screen.findByText("No members yet");
+    expect(empty).toHaveClass("et");
+    expect(container.querySelector(".empty.compact")).toBeInTheDocument();
+    expect(screen.getByText("Add the first member to this team.")).toBeInTheDocument();
   });
 
   // v2.6 §2.10 — badge "no approver" confirmado contra get_full_jsx("TeamsView"):
@@ -35,7 +108,7 @@ describe("TeamMembersSection", () => {
       )
     );
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
 
     expect(await screen.findByText("alice")).toBeInTheDocument();
     expect(screen.getByText(/no approver/i)).toBeInTheDocument();
@@ -49,7 +122,7 @@ describe("TeamMembersSection", () => {
       )
     );
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
 
     expect(await screen.findByText("alice")).toBeInTheDocument();
     expect(screen.queryByText(/no approver/i)).not.toBeInTheDocument();
@@ -61,7 +134,7 @@ describe("TeamMembersSection", () => {
   it("shows the 'no approver' badge even when the team has no members at all", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
 
     expect(await screen.findByText(/no members yet/i)).toBeInTheDocument();
     expect(screen.getByText(/no approver/i)).toBeInTheDocument();
@@ -85,7 +158,7 @@ describe("TeamMembersSection", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
     await screen.findByText(/no members yet/i);
 
     await user.click(screen.getByRole("button", { name: /add member/i }));
@@ -113,7 +186,7 @@ describe("TeamMembersSection", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
     await screen.findByText(/no members yet/i);
 
     await user.click(screen.getByRole("button", { name: /add member/i }));
@@ -151,7 +224,7 @@ describe("TeamMembersSection", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
     await screen.findByText("alice");
 
     await user.click(screen.getByRole("button", { name: /remove member/i }));
@@ -173,7 +246,7 @@ describe("TeamMembersSection", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
     await screen.findByText("alice");
 
     await user.click(screen.getByRole("switch"));
@@ -197,7 +270,7 @@ describe("TeamMembersSection", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
 
-    render(<TeamMembersSection teamId="team1" teamName="Payments Squad" />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
     await screen.findByText("alice");
 
     await user.click(screen.getByRole("switch"));

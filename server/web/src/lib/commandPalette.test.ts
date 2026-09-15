@@ -70,6 +70,21 @@ describe("searchCommands", () => {
     expect(hits.people.map((p) => p.id)).toEqual(["1", "2"]);
   });
 
+  // Bug real reportado pelo usuário: a busca geral (⌘K) "abre o modal e não retorna nada" — a
+  // causa era o match não normalizar acento (ver lib/textSearch.ts). Nomes/times/apps reais são
+  // PT-BR, então digitar a versão sem acento de um nome acentuado devolvia zero resultados.
+  it("matches an accented name/team/app against an unaccented query", () => {
+    const hits = searchCommands("joao", data({
+      apps: [{ id: "a", name: "João App" }],
+      teams: [{ id: "t", name: "Time do João" }],
+      people: [{ id: "p", name: "João Pereira", username: "jpereira" }],
+    }));
+
+    expect(hits.apps.map((a) => a.id)).toEqual(["a"]);
+    expect(hits.teams.map((t) => t.id)).toEqual(["t"]);
+    expect(hits.people.map((p) => p.id)).toEqual(["p"]);
+  });
+
   it("returns no toggle/team/people hits for an empty query, even if data is non-empty", () => {
     const hits = searchCommands("   ", data({
       toggles: [{ appId: "a", appName: "A", path: "x.y" }],

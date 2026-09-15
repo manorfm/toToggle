@@ -5,7 +5,6 @@ import { ConfirmModal } from "../components/ConfirmModal";
 import { CreateTeamModal } from "../components/CreateTeamModal";
 import { Icon } from "../components/Icon";
 import { TeamMembersSection } from "../components/TeamMembersSection";
-import { TeamRow } from "../components/TeamRow";
 import { useToast } from "../components/ToastProvider";
 import { useAppUser } from "../hooks/useAppUser";
 import type { TeamWithCounts } from "../types/team";
@@ -15,8 +14,10 @@ type LoadState =
   | { status: "loaded"; teams: TeamWithCounts[] }
   | { status: "error"; message: string };
 
-// Adaptado de get_full_jsx("TeamsView"). Aprovadores por membro ficam de fora nesta
-// fatia (ver TeamMembersSection sobre troca de role ser global, não por time).
+// Adaptado de get_full_jsx("TeamsView") — cada time é um único bloco (TeamMembersSection: nome,
+// badges, "Add member" e a lista/estado vazio de membros), como confirmado no protótipo real.
+// Aprovadores por membro ficam de fora nesta fatia (ver TeamMembersSection sobre troca de role
+// ser global, não por time).
 export function TeamsScreen() {
   const user = useAppUser();
   const toast = useToast();
@@ -82,13 +83,16 @@ export function TeamsScreen() {
       {state.status === "loading" && <div className="empty">Carregando times…</div>}
       {state.status === "error" && <div className="empty">{state.message}</div>}
       {state.status === "loaded" && state.teams.length === 0 && <div className="empty">No teams yet.</div>}
-      {state.status === "loaded" &&
-        state.teams.map((team) => (
-          <div key={team.id} style={{ marginBottom: 26 }}>
-            <TeamRow team={team} onDelete={user.role === "root" ? (teamId) => setDeletingTeamId(teamId) : undefined} />
-            <TeamMembersSection teamId={team.id} teamName={team.name} />
-          </div>
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+        {state.status === "loaded" &&
+          state.teams.map((team) => (
+            <TeamMembersSection
+              key={team.id}
+              team={team}
+              onDelete={user.role === "root" ? (teamId) => setDeletingTeamId(teamId) : undefined}
+            />
+          ))}
+      </div>
 
       {creating && (
         <CreateTeamModal

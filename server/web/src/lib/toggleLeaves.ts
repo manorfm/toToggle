@@ -1,3 +1,4 @@
+import { matchesQuery } from "./textSearch";
 import type { ToggleDetail, ToggleLeaf, ToggleNode } from "../types/toggle";
 
 // GET .../toggles?hierarchy=true só dá a estrutura + enabled já cascateado (own AND parent); pra
@@ -163,9 +164,9 @@ export function leafDottedPaths(hierarchy: ToggleNode[]): string[] {
 }
 
 export function filterLeaves(leaves: ToggleLeaf[], search: string): ToggleLeaf[] {
-  const q = search.trim().toLowerCase();
+  const q = search.trim();
   if (!q) return leaves;
-  return leaves.filter((leaf) => leaf.segs.join(".").toLowerCase().includes(q));
+  return leaves.filter((leaf) => matchesQuery(leaf.segs.join("."), q));
 }
 
 export type ToggleStatus = "green" | "amber" | "red";
