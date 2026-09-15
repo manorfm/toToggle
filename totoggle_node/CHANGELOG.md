@@ -14,8 +14,9 @@ never published to the npm registry.
 - TypeScript/Node client (`ToToggleClient`, `createConfig`) that fetches and caches an
   application's toggle catalog from the ToToggle server via a secret key, evaluating `isActive`
   entirely from the local cache. Zero runtime dependencies.
-- All 7 activation rule types (percentage, attribute, user_id, ip, country, time, cohort), with
-  cascading ancestor validation matching the server's semantics.
+- All 7 activation rule types (percentage, parameter, user_id, ip, country, time, cohort), with
+  cascading ancestor validation matching the server's semantics. `cohort` activates on context-key
+  presence alone (any non-empty value), not a match against a configured list.
 - `NodeRequestContextResolver` with trusted-proxy (IPv4 CIDR) support, RFC 7239 `Forwarded`
   header handling, a local GeoIP country source, and Express/Fastify middleware integration.
 - Background refresh with exponential backoff + jitter, offline mode, and HTTP `ETag`/

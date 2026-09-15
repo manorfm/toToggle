@@ -13,8 +13,9 @@ API considered ready for external consumers.
 - Go client (`New`, `NewConfig`, functional options) that fetches and caches an application's
   toggle catalog from the ToToggle server via a secret key, with `IsActive`/`IsActiveContext`
   evaluating entirely from the local cache.
-- All 7 activation rule types (percentage, attribute, user_id, ip, country, time, cohort), with
-  cascading ancestor validation matching the server's semantics.
+- All 7 activation rule types (percentage, parameter, user_id, ip, country, time, cohort), with
+  cascading ancestor validation matching the server's semantics. `cohort` activates on context-key
+  presence alone (any non-empty value), not a match against a configured list.
 - `httpcontext` package: `net/http` request-context middleware with trusted-proxy (CIDR) support,
   RFC 7239 `Forwarded` handling, and an optional local GeoIP country resolver — all fail-closed.
 - Background refresh with exponential backoff + jitter, offline mode, and HTTP `ETag`/
