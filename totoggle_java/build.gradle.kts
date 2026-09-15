@@ -114,7 +114,12 @@ mavenPublishing {
         }
     }
 
-    publishToMavenCentral()
+    // automaticRelease=true: without it (the default), a publish uploads a "USER_MANAGED" bundle
+    // to the Sonatype Central Portal that just sits there until a human logs into
+    // central.sonatype.com and clicks Publish — v1.0.0 and v2.0.0 were both silently stuck this
+    // way (confirmed live: search.maven.org has zero results for either). The release workflow's
+    // own comment already claimed this step "runs on every tag push" with no manual step implied.
+    publishToMavenCentral(automaticRelease = true)
     signAllPublications()
 }
 
