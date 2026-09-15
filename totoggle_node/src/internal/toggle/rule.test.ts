@@ -16,11 +16,21 @@ describe("ActivationRule", () => {
   });
 
   it.each([
-    ["both set", { type: "attribute", value: "premium" }, true],
-    ["type only", { type: "attribute", value: "" }, false],
+    ["both set", { type: "parameter", value: "premium" }, true],
+    ["type only", { type: "parameter", value: "" }, false],
     ["value only", { type: "", value: "premium" }, false],
     ["neither", { type: "", value: "" }, false],
   ] as const)("isValid: %s", (_label, rule, expected) => {
+    expect(isValid(rule)).toBe(expected);
+  });
+
+  // v2.6.4: cohort is the one type that no longer needs a value (it stopped comparing `value`
+  // altogether — see PresenceEvaluator). isValid special-cases it; lock that in explicitly.
+  it.each([
+    ["cohort with empty value is valid", { type: "cohort", value: "" }, true],
+    ["cohort with a (now-ignored) legacy value is still valid", { type: "cohort", value: "canary,beta" }, true],
+    ["empty type is never valid, even for cohort's context_key literal", { type: "", value: "" }, false],
+  ] as const)("isValid cohort special case: %s", (_label, rule, expected) => {
     expect(isValid(rule)).toBe(expected);
   });
 
@@ -30,7 +40,7 @@ describe("ActivationRule", () => {
   it("lists exactly the 7 server-defined rule types", () => {
     expect(RULE_TYPES).toEqual([
       "percentage",
-      "attribute",
+      "parameter",
       "user_id",
       "ip",
       "country",

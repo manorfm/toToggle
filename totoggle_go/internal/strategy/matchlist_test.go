@@ -8,12 +8,14 @@ import (
 	"github.com/manorfm/toToggle/totoggle_go/internal/toggle"
 )
 
-// MatchListEvaluator is the one implementation shared by attribute, user_id, country, and cohort
-// — all four are "comma-separated allowlist, exact trimmed match" per the confirmed prototype
-// hints, so this is a single reused type rather than four near-identical copies.
+// MatchListEvaluator is the one implementation shared by parameter, user_id, and country — all
+// three are "comma-separated allowlist, exact trimmed match" per the confirmed prototype hints,
+// so this is a single reused type rather than three near-identical copies. Cohort used to share
+// this too, but v2.6.4 moved it to PresenceEvaluator (presence_test.go) — it no longer compares
+// against a list at all.
 func TestMatchListEvaluator_MatchesOneOfCommaSeparatedValues(t *testing.T) {
 	e := MatchListEvaluator{}
-	rule := toggle.ActivationRule{Type: toggle.RuleTypeAttribute, Value: "premium,enterprise"}
+	rule := toggle.ActivationRule{Type: toggle.RuleTypeParameter, Value: "premium,enterprise"}
 
 	assert.True(t, e.Evaluate(rule, "premium", true))
 	assert.True(t, e.Evaluate(rule, "enterprise", true))
@@ -39,14 +41,14 @@ func TestMatchListEvaluator_NoKeyNeverMatches(t *testing.T) {
 
 func TestMatchListEvaluator_BlankRuleValueNeverMatches(t *testing.T) {
 	e := MatchListEvaluator{}
-	rule := toggle.ActivationRule{Type: toggle.RuleTypeCohort, Value: "   "}
+	rule := toggle.ActivationRule{Type: toggle.RuleTypeParameter, Value: "   "}
 
 	assert.False(t, e.Evaluate(rule, "true", true))
 }
 
 func TestMatchListEvaluator_EmptyStringKeyCanMatchAnEmptyListEntry(t *testing.T) {
 	e := MatchListEvaluator{}
-	rule := toggle.ActivationRule{Type: toggle.RuleTypeCohort, Value: "true,"}
+	rule := toggle.ActivationRule{Type: toggle.RuleTypeParameter, Value: "true,"}
 
 	assert.True(t, e.Evaluate(rule, "", true))
 }

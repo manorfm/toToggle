@@ -61,8 +61,12 @@ object TestDataSetup {
         val contextKey: String
     )
 
+    // `teams` defaults to empty: GET /api/teams with zero teams returns {"success":true} with the
+    // "teams" key OMITTED entirely (nil Go slice never serializes as []) — confirmed live against
+    // a fresh server. Without a default, Jackson fails deserializing that response since the
+    // constructor property is missing, not just empty.
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private data class TeamsResponse(val teams: List<TeamResponse>)
+    private data class TeamsResponse(val teams: List<TeamResponse> = emptyList())
     @JsonIgnoreProperties(ignoreUnknown = true)
     private data class TeamResponse(val id: String)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -121,7 +125,7 @@ object TestDataSetup {
      * evaluation identifies an SDK/context regression instead of random fixture drift. */
     internal fun stressToggleCatalogue(): List<Toggle> = listOf(
         Toggle("stress.no-rule", true, 2, false, null),
-        Toggle("stress.local-rule", true, 2, true, ActivationRule("attribute", "pro", "attributes.plan")),
+        Toggle("stress.local-rule", true, 2, true, ActivationRule("parameter", "pro", "attributes.plan")),
         Toggle("stress.parent-disabled", false, 2, false, null),
         Toggle("stress.parent-disabled.child", true, 3, false, null),
         Toggle("stress.country-rule", true, 2, true, ActivationRule("country", "BR", "country")),

@@ -80,7 +80,7 @@ async function catalogServer(): Promise<{ url: string }> {
     expect(request.headers["x-api-key"]).toBe("sk_stress");
     response.setHeader("content-type", "application/json");
     response.end(JSON.stringify({ application: { toggles: [
-      toggle("1", "payments.card", { type: "attribute", value: "pro", config: { context_key: "attributes.plan" } }),
+      toggle("1", "payments.card", { type: "parameter", value: "pro", config: { context_key: "attributes.plan" } }),
       toggle("2", "network.v6", { type: "ip", value: "2001:db8::/32", config: { context_key: "ip" } }),
       toggle("3", "location.br", { type: "country", value: "BR", config: { context_key: "country" } }),
     ] } }));

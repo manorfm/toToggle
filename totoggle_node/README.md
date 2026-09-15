@@ -80,17 +80,24 @@ All 7 server-defined rule types are supported:
 
 | Type | Rule value | Matched against |
 |---|---|---|
-| `percentage` | `"0"`-`"100"` | `rollout_key`; stable, toggle-specific cohort. Missing key fails closed. **Must resolve to a durable identity (user/account ID), never a raw IP or other value that can change between two requests from the same person — bucketing is deterministic per key, so an unstable key silently produces inconsistent results for that person across calls and across service instances.** |
-| `attribute` | comma-separated allowlist | A configured `attributes.<name>` key. |
+| `percentage` | `"0"`-`"100"` | `rollout_key`; stable, toggle-specific bucket. Missing key fails closed. **Must resolve to a durable identity (user/account ID), never a raw IP or other value that can change between two requests from the same person — bucketing is deterministic per key, so an unstable key silently produces inconsistent results for that person across calls and across service instances.** |
+| `parameter` | comma-separated allowlist | A configured `attributes.<name>` key. (Renamed from `attribute` in v2.6.4 — the wire value itself changed, not just a label.) |
 | `user_id` | comma-separated allowlist | `user_id`. |
 | `country` | comma-separated allowlist | `country`, an ISO alpha-2 code. |
-| `cohort` | comma-separated allowlist | `cohort`, e.g. `canary` or `beta` (not boolean). |
+| `cohort` | *(no value — see below)* | `cohort`, presence-only. |
 | `ip` | comma-separated IPv4/IPv6 addresses and CIDR ranges | `ip`. |
 | `time` | `"HH:mm-HH:mm"`, 24h, overnight-aware | The current time in the configured `timeZone`; no context is needed. |
 
 A rule with no context supplied when it needs one, an out-of-range percentage, an
 unparseable IP, or a malformed time window all fail closed to `false` rather than throwing — a
 feature-flag check should never be able to crash a caller's request path.
+
+**`cohort` (v2.6.4)**: unlike every other list-based type above, `cohort` has no rule value to
+match against — it activates whenever the resolved `cohort` context value is present and
+non-blank, whatever it says. Membership is decided entirely by the calling application (whether,
+and for whom, it sends a `cohort` value at all); toToggle never inspects the content. A rule
+created before v2.6.4 may still carry a legacy comma-separated value (e.g. `"canary,beta"`) — this
+client ignores it.
 
 ## Request context
 

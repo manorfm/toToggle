@@ -21,7 +21,7 @@ class StrategyFactoryTest {
         val registeredTypes = factory.getRegisteredRuleTypes()
 
         assertThat(registeredTypes).containsExactlyInAnyOrder(
-            "percentage", "attribute", "user_id", "ip", "country", "time", "cohort"
+            "percentage", "parameter", "user_id", "ip", "country", "time", "cohort"
         )
     }
     
@@ -34,11 +34,11 @@ class StrategyFactoryTest {
     }
     
     @Test
-    fun `should get correct strategy for attribute rule`() {
-        val strategy = factory.getStrategy("attribute")
-        
-        assertThat(strategy).isInstanceOf(AttributeStrategy::class.java)
-        assertThat(strategy.getRuleType()).isEqualTo("attribute")
+    fun `should get correct strategy for parameter rule`() {
+        val strategy = factory.getStrategy("parameter")
+
+        assertThat(strategy).isInstanceOf(ParameterStrategy::class.java)
+        assertThat(strategy.getRuleType()).isEqualTo("parameter")
     }
     
     @Test
@@ -51,7 +51,7 @@ class StrategyFactoryTest {
     @Test
     fun `should check if strategy is available`() {
         assertThat(factory.hasStrategy("percentage")).isTrue()
-        assertThat(factory.hasStrategy("attribute")).isTrue()
+        assertThat(factory.hasStrategy("parameter")).isTrue()
         assertThat(factory.hasStrategy("unknown")).isFalse()
     }
     
@@ -98,8 +98,8 @@ class StrategyFactoryTest {
     }
     
     @Test
-    fun `should evaluate a valid attribute rule`() {
-        val rule = ActivationRule("attribute", "premium")
+    fun `should evaluate a valid parameter rule`() {
+        val rule = ActivationRule("parameter", "premium")
         
         val resultWithMatch = factory.evaluate(rule, "premium")
         val resultWithoutMatch = factory.evaluate(rule, "basic")
@@ -147,7 +147,7 @@ class StrategyFactoryTest {
     @Test
     fun `should not throw for a context-dependent type with no context — degrades to false`() {
         for (type in listOf(
-            ActivationRule.TYPE_ATTRIBUTE,
+            ActivationRule.TYPE_PARAMETER,
             ActivationRule.TYPE_USER_ID,
             ActivationRule.TYPE_COUNTRY,
             ActivationRule.TYPE_COHORT,

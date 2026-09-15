@@ -13,12 +13,14 @@ type RuleType string
 
 const (
 	RuleTypePercentage RuleType = "percentage"
-	RuleTypeAttribute  RuleType = "attribute"
-	RuleTypeUserID     RuleType = "user_id"
-	RuleTypeIP         RuleType = "ip"
-	RuleTypeCountry    RuleType = "country"
-	RuleTypeTime       RuleType = "time"
-	RuleTypeCohort     RuleType = "cohort"
+	// RuleTypeParameter was RuleTypeAttribute ("attribute") before the v2.6.4 prototype update
+	// renamed the wire type itself, not just its UI label.
+	RuleTypeParameter RuleType = "parameter"
+	RuleTypeUserID    RuleType = "user_id"
+	RuleTypeIP        RuleType = "ip"
+	RuleTypeCountry   RuleType = "country"
+	RuleTypeTime      RuleType = "time"
+	RuleTypeCohort    RuleType = "cohort"
 )
 
 // ActivationRule is a value object: Type and Value together define a condition, and neither is
@@ -48,7 +50,7 @@ func (r ActivationRule) ContextKey() (string, bool) {
 func validContextKey(ruleType RuleType, key string) bool {
 	if strings.HasPrefix(key, "attributes.") {
 		return len(strings.TrimPrefix(key, "attributes.")) > 0 &&
-			(ruleType == RuleTypePercentage || ruleType == RuleTypeAttribute)
+			(ruleType == RuleTypePercentage || ruleType == RuleTypeParameter)
 	}
 	return (ruleType == RuleTypePercentage && key == "rollout_key") ||
 		(ruleType == RuleTypeUserID && key == "user_id") ||
@@ -62,8 +64,16 @@ func (r ActivationRule) IsEmpty() bool {
 	return r.Type == "" && r.Value == ""
 }
 
-// IsValid reports whether this rule has both a type and a value — required for it to be
-// evaluated at all.
+// IsValid reports whether this rule has enough to be evaluated: a type, and (except for
+// RuleTypeCohort) a non-empty value. Since v2.6.4, cohort no longer compares Value against
+// anything — it activates on context-key presence alone — so an empty Value is valid for it,
+// unlike every other rule type.
 func (r ActivationRule) IsValid() bool {
-	return r.Type != "" && r.Value != ""
+	if r.Type == "" {
+		return false
+	}
+	if r.Type == RuleTypeCohort {
+		return true
+	}
+	return r.Value != ""
 }

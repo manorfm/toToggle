@@ -15,9 +15,9 @@ const baseToggle: ToggleDetail = {
 };
 
 describe("deriveInitialRuleState", () => {
-  it("exposes attribute and excludes the removed parameter type", () => {
-    expect(RULE_TYPES.map((rule) => rule.type)).toContain("attribute");
-    expect(RULE_TYPES.map((rule) => rule.type)).not.toContain("parameter");
+  it("exposes parameter and excludes the renamed-away attribute type (v2.6.4)", () => {
+    expect(RULE_TYPES.map((rule) => rule.type)).toContain("parameter");
+    expect(RULE_TYPES.map((rule) => rule.type)).not.toContain("attribute");
   });
   it("returns null/empty when there is no rule and activation_rule is literally null", () => {
     expect(deriveInitialRuleState(baseToggle)).toEqual({ ruleType: null, ruleValue: "" });

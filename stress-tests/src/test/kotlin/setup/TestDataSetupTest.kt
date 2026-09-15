@@ -88,7 +88,7 @@ class TestDataSetupTest {
         )
         assertThat(toggles.single { it.path == "stress.parent-disabled" }.enabled).isFalse()
         assertThat(toggles.single { it.path == "stress.local-rule" }.activationRule)
-            .isEqualTo(TestDataSetup.ActivationRule("attribute", "pro", "attributes.plan"))
+            .isEqualTo(TestDataSetup.ActivationRule("parameter", "pro", "attributes.plan"))
         assertThat(toggles.single { it.path == "stress.country-rule" }.activationRule)
             .isEqualTo(TestDataSetup.ActivationRule("country", "BR", "country"))
         assertThat(toggles.single { it.path == "stress.ipv4-rule" }.activationRule)

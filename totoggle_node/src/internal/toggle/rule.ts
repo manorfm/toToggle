@@ -2,7 +2,7 @@
  * a parsed `type` field compare structurally without an extra mapping step. */
 export const RULE_TYPES = [
   "percentage",
-  "attribute",
+  "parameter",
   "user_id",
   "ip",
   "country",
@@ -32,7 +32,7 @@ export function hasCanonicalContextKey(rule: ActivationRule): boolean {
   const key = rule.config?.context_key;
   if (key === undefined || key === "") return false;
   if (key.startsWith("attributes.")) {
-    return key.length > "attributes.".length && (rule.type === "percentage" || rule.type === "attribute");
+    return key.length > "attributes.".length && (rule.type === "percentage" || rule.type === "parameter");
   }
   return (rule.type === "percentage" && key === "rollout_key")
     || (rule.type === "user_id" && key === "user_id")
@@ -46,8 +46,10 @@ export function isEmpty(rule: ActivationRule): boolean {
   return rule.type === "" && rule.value === "";
 }
 
-/** Reports whether this rule has both a type and a value — required for it to be evaluated at
- * all. */
+/** Reports whether this rule has a type and (for every type except "cohort") a value — required
+ * for it to be evaluated at all. "cohort" is the one exception (v2.6.4): it no longer compares
+ * `value` against anything, so an empty value is valid for that type alone. */
 export function isValid(rule: ActivationRule): boolean {
-  return rule.type !== "" && rule.value !== "";
+  if (rule.type === "") return false;
+  return rule.type === "cohort" || rule.value !== "";
 }

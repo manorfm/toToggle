@@ -92,10 +92,10 @@ All 7 server-defined rule types are supported:
 | Type | Rule value | Matched against |
 |---|---|---|
 | `percentage` | `"0"`-`"100"` | `rollout_key`; stable, toggle-specific cohort. Missing key fails closed. **Must resolve to a durable identity (user/account ID), never a raw IP or other value that can change between two requests from the same person — bucketing is deterministic per key, so an unstable key silently produces inconsistent results for that person across calls and across service instances.** |
-| `attribute` | comma-separated allowlist | `attributes.<name>`, declared by the rule. |
+| `parameter` | comma-separated allowlist | `attributes.<name>`, declared by the rule. Renamed from `attribute` in v2.6.4 — same matching, new wire name. |
 | `user_id` | comma-separated allowlist | `user_id`. |
 | `country` | comma-separated allowlist | `country`, a normalized ISO 3166-1 alpha-2 code. |
-| `cohort` | comma-separated allowlist | `cohort`, e.g. `canary` or `beta` (not boolean). |
+| `cohort` | none — presence only | `cohort`. Since v2.6.4, this rule ignores its own value entirely: it activates whenever your resolver returns *any* non-empty `cohort` value, regardless of content. Membership is decided entirely by your application (e.g. only resolve a value for users it has tagged), not by a named list configured on the server. |
 | `ip` | comma-separated IPv4/IPv6 addresses and/or CIDR ranges (e.g. `"10.0.0.0/24"`) | `ip`. |
 | `time` | `"HH:mm-HH:mm"`, 24h, overnight-aware | The current time in the configured `WithTimeZone`. It needs no context key. |
 
@@ -113,8 +113,8 @@ a value your code must supply**, not something you configure once and forget:
 |---|---|---|
 | `user_id` | `user_id` | The authenticated user's ID for this request. |
 | `rollout_key` | `percentage` | Any durable per-user identity (often the same value as `user_id`) — never something that can change between two requests from the same person, or bucketing stops being consistent for them. |
-| `cohort` | `cohort` | A deployment-ring label your own rollout process assigns, e.g. `"canary"`. |
-| `attributes.<name>` | `attribute`, `percentage` | Whatever your application calls `<name>` — a plan tier, an experiment group, anything. `<name>` is chosen by whoever configured the rule on the server; your resolver must answer for that exact name. |
+| `cohort` | `cohort` | Any non-empty value your own rollout process assigns to mark this request as belonging to the cohort, e.g. `"canary"` — since v2.6.4 the actual content is never compared to anything, only presence matters, so return `ok=false` (or an empty value) for requests that are *not* in the cohort. |
+| `attributes.<name>` | `parameter`, `percentage` | Whatever your application calls `<name>` — a plan tier, an experiment group, anything. `<name>` is chosen by whoever configured the rule on the server; your resolver must answer for that exact name. |
 | `ip` / `country` | `ip`, `country` | Never yours to set directly — see "Why `httpcontext` exists anyway" below. |
 
 The client's entire dependency on your application is this 2-method interface (`context.go`):
@@ -150,7 +150,7 @@ client := totoggle.New(cfg)
 client.IsActiveContext(request.Context(), "checkout.payments.card")
 ```
 
-That's a complete, correct integration for `user_id`/`percentage`/`attribute`/`cohort` rules —
+That's a complete, correct integration for `user_id`/`percentage`/`parameter`/`cohort` rules —
 nothing below this point is required to use them.
 
 ### Why `httpcontext` exists anyway

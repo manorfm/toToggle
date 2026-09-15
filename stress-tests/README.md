@@ -181,7 +181,7 @@ Estrutura criada por aplicação:
 ```
 stress
 ├── no-rule
-├── local-rule          (attribute attributes.plan = pro)
+├── local-rule          (parameter attributes.plan = pro)
 ├── parent-disabled     (desligado)
 │   └── child
 ├── country-rule        (country = BR)

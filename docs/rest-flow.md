@@ -45,7 +45,7 @@ Main vocabulary:
 - Toggle: a node in a hierarchical, dot-separated path (e.g. `user.payments.view-table`). Children inherit
   only their parent's enabled state — a disabled parent makes every descendant effectively disabled even if the
   descendant's own `enabled` flag is `true`. Activation rules never inherit: only the exact toggle queried by an SDK evaluates its rule.
-- Activation rule: an optional extra condition attached to a toggle (`percentage`, `attribute`, `user_id`,
+- Activation rule: an optional extra condition attached to a toggle (`percentage`, `parameter`, `user_id`,
   `ip`, `country`, `time`, `cohort`) layered on top of the enabled/disabled state.
 - Team: a group of users. Owns applications through a permission (`read`, `write`, `admin`) and can have
   members marked as approvers for the approval workflow.
@@ -820,26 +820,41 @@ Approval-aware, minimum role `admin`. Full replace of the toggle's own `enabled`
 ```
 
 Activation rule types (`type`) and their required `value` semantics: `percentage` (0–100 rollout
-of the population identified by `rollout_key` or a named `attributes.<name>` key), `attribute`
-(match against a named `attributes.<name>` context value), `user_id`, `ip`, `country`, `time`,
-and `cohort` (a comma-separated cohort/ring list such as `canary,beta`, not a boolean). Every
-type requires a non-empty `value`. `config.context_key` is required for every rule except `time`:
-`percentage` accepts `rollout_key` or `attributes.<name>`; `attribute` requires
-`attributes.<name>`; `user_id`, `ip`, `country`, and `cohort` require their matching canonical
-key. `time` must not include `config.context_key`. When
-`has_activation_rule` is `false`, any `activation_rule` in the body is ignored and the toggle's rule is
-cleared.
+of the population identified by `rollout_key` or a named `attributes.<name>` key), `parameter`
+(renamed from `attribute` in v2.6.4 — match against a named `attributes.<name>` context value),
+`user_id`, `ip`, `country`, `time`, and `cohort`. `percentage`, `parameter`, `user_id`, `ip`,
+`country`, and `time` all require a non-empty `value` (validated per type — see each type's
+format above). **`cohort` is the one exception: it does not use `value` at all** (v2.6.4 — the
+prototype changed this from "a comma-separated cohort/ring list" to a plain on/off condition, "no
+value needed, just turn it on for this cohort"). `config.context_key` is still required for
+`cohort` (fixed to the literal `"cohort"`) even though `value` isn't — only `time` omits
+`config.context_key` entirely. `percentage` accepts `rollout_key` or `attributes.<name>` as its
+context key; `parameter` requires `attributes.<name>`; `user_id`, `ip`, and `country` require
+their matching canonical key. When `has_activation_rule` is `false`, any `activation_rule` in the
+body is ignored and the toggle's rule is cleared.
 
-> **Rollout-key contract for `percentage`/`cohort`**: every client SDK buckets deterministically
-> from a hash of `rule value + toggle path + the resolved context value` (confirmed
-> bit-identical across `totoggle_java`/`totoggle_go`/`totoggle_node` — see each SDK's
+> **`cohort` evaluation (v2.6.4)**: since `value` carries no meaning for this rule type anymore,
+> every client SDK's cohort evaluator activates whenever the request context supplies a
+> non-empty value for the `cohort` context key — it's a presence check, not a match against a
+> named list. An app decides membership entirely by whether (and for whom) it sends a `cohort`
+> context value at all; toToggle never inspects what that value actually says. A toggle whose
+> `cohort` rule was created before v2.6.4 and still carries a legacy comma-separated `value`
+> (e.g. `"canary,beta"`) keeps that value in storage, but it is never read by evaluation anymore
+> — inert, not an error.
+
+> **Rollout-key contract for `percentage`** (renamed from "percentage/cohort" in v2.6.4 — this
+> note was never about the `cohort` rule TYPE, "cohort" below is the generic term for the group
+> of people a hash puts on the same side of the bucket; see the `cohort` evaluation callout above
+> for the actual rule type, which has no hashing involved): every client SDK buckets
+> deterministically from a hash of `rule value + toggle path + the resolved context value`
+> (confirmed bit-identical across `totoggle_java`/`totoggle_go`/`totoggle_node` — see each SDK's
 > `PercentageStrategy`/`percentage.go`/`percentage.ts`), so the same real person always lands in
 > the same bucket for a given toggle, on any service instance, in any of the three SDKs — but
 > only if `context_key` resolves to a **durable, request-independent identity** (a user ID, an
 > account ID, an authenticated session subject). Pointing `context_key` at something that can
 > legitimately change between two requests from the same person — most commonly a raw client
 > `ip`, but also any per-request token or transient value — silently defeats this guarantee: the
-> same person can flip between the enabled and disabled cohort from one request to the next, on
+> same person can flip between the enabled and disabled bucket from one request to the next, on
 > the same service instance, with no error raised anywhere. This is a configuration choice, not
 > something the SDKs can validate on their own, since the server has no way to know which
 > `attributes.<name>` a given deployment fills with a durable value versus a transient one.

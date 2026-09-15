@@ -40,11 +40,29 @@ class ActivationRuleTest {
         // Matches server/internal/app/domain/entity/activation_rule.go's ActivationRuleType
         // constants exactly (the server is the source of truth for what these strings are).
         assertThat(ActivationRule.TYPE_PERCENTAGE).isEqualTo("percentage")
-        assertThat(ActivationRule.TYPE_ATTRIBUTE).isEqualTo("attribute")
+        assertThat(ActivationRule.TYPE_PARAMETER).isEqualTo("parameter")
         assertThat(ActivationRule.TYPE_USER_ID).isEqualTo("user_id")
         assertThat(ActivationRule.TYPE_IP).isEqualTo("ip")
         assertThat(ActivationRule.TYPE_COUNTRY).isEqualTo("country")
         assertThat(ActivationRule.TYPE_TIME).isEqualTo("time")
         assertThat(ActivationRule.TYPE_COHORT).isEqualTo("cohort")
+    }
+
+    @Test
+    fun `cohort rule with a blank value is valid (v2_6_4 - cohort no longer uses value)`() {
+        val cohortNoValue = ActivationRule(ActivationRule.TYPE_COHORT, "")
+        val cohortLegacyValue = ActivationRule(ActivationRule.TYPE_COHORT, "canary,beta")
+        val cohortNoType = ActivationRule("", "")
+
+        assertThat(cohortNoValue.isValid()).isTrue()
+        assertThat(cohortNoValue.isEmpty()).isFalse()
+
+        // A rule created before v2.6.4 may still carry a legacy value — still valid, the value
+        // is just never read anymore (see CohortStrategy).
+        assertThat(cohortLegacyValue.isValid()).isTrue()
+
+        // A blank type is still invalid regardless of type — "cohort" alone isn't a magic bypass
+        // for a genuinely empty rule.
+        assertThat(cohortNoType.isValid()).isFalse()
     }
 }

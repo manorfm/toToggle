@@ -22,9 +22,9 @@ func TestActivationRule_ValidateRule(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid attribute rule",
+			name: "valid parameter rule",
 			rule: ActivationRule{
-				Type:   ActivationRuleTypeAttribute,
+				Type:   ActivationRuleTypeParameter,
 				Value:  "premium",
 				Config: json.RawMessage(`{"context_key":"attributes.plan"}`),
 			},
@@ -66,10 +66,33 @@ func TestActivationRule_ValidateRule(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid cohort rule",
+			name: "valid cohort rule (legacy value still tolerated, just inert)",
 			rule: ActivationRule{
 				Type:   ActivationRuleTypeCohort,
 				Value:  "v2.0",
+				Config: json.RawMessage(`{"context_key":"cohort"}`),
+			},
+			expectError: false,
+		},
+		{
+			// v2.6.4: cohort não pede mais valor ("No value needed, just turn it on for this
+			// cohort", confirmado no protótipo) — Value vazio agora é o caso normal, não um erro.
+			name: "cohort rule without a value is valid",
+			rule: ActivationRule{
+				Type:   ActivationRuleTypeCohort,
+				Value:  "",
+				Config: json.RawMessage(`{"context_key":"cohort"}`),
+			},
+			expectError: false,
+		},
+		{
+			// Antes da v2.6.4 isso era rejeitado de propósito ("cohort não aceita valores
+			// booleanos") porque cohort comparava Value contra uma lista de nomes. Value deixou
+			// de ser comparado — não há mais razão pra recusar nenhum conteúdo específico.
+			name: "cohort rule with a boolean-looking value is no longer rejected",
+			rule: ActivationRule{
+				Type:   ActivationRuleTypeCohort,
+				Value:  "true",
 				Config: json.RawMessage(`{"context_key":"cohort"}`),
 			},
 			expectError: false,
@@ -84,9 +107,9 @@ func TestActivationRule_ValidateRule(t *testing.T) {
 			errorMsg:    "valor de porcentagem é obrigatório",
 		},
 		{
-			name: "empty attribute value",
+			name: "empty parameter value",
 			rule: ActivationRule{
-				Type:  ActivationRuleTypeAttribute,
+				Type:  ActivationRuleTypeParameter,
 				Value: "",
 			},
 			expectError: true,
@@ -182,13 +205,14 @@ func TestActivationRule_ValidateRule(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "empty cohort value",
+			// context_key ainda é obrigatório pra cohort (fixo em "cohort") mesmo sem Value.
+			name: "cohort rule without context_key is still rejected",
 			rule: ActivationRule{
 				Type:  ActivationRuleTypeCohort,
 				Value: "",
 			},
 			expectError: true,
-			errorMsg:    "valor da regra é obrigatório",
+			errorMsg:    "configuração context_key válida é obrigatória para regra cohort",
 		},
 		{
 			name: "invalid rule type",
@@ -222,15 +246,15 @@ func TestActivationRule_ValidateRule(t *testing.T) {
 	}
 }
 
-func TestActivationRule_AttributeRequiresNamedAttributeContextKey(t *testing.T) {
-	valid := &ActivationRule{Type: ActivationRuleTypeAttribute, Value: "pro", Config: json.RawMessage(`{"context_key":"attributes.plan"}`)}
-	invalid := &ActivationRule{Type: ActivationRuleTypeAttribute, Value: "pro", Config: json.RawMessage(`{"context_key":"user_id"}`)}
+func TestActivationRule_ParameterRequiresNamedAttributeContextKey(t *testing.T) {
+	valid := &ActivationRule{Type: ActivationRuleTypeParameter, Value: "pro", Config: json.RawMessage(`{"context_key":"attributes.plan"}`)}
+	invalid := &ActivationRule{Type: ActivationRuleTypeParameter, Value: "pro", Config: json.RawMessage(`{"context_key":"user_id"}`)}
 
 	if err := valid.ValidateRule(); err != nil {
 		t.Fatalf("expected named attribute context key to be valid: %v", err)
 	}
 	if err := invalid.ValidateRule(); err == nil {
-		t.Fatal("expected non-attribute context key to be rejected")
+		t.Fatal("expected non-attributes.* context key to be rejected")
 	}
 }
 
@@ -360,7 +384,7 @@ func TestGetRuleTypeOptions(t *testing.T) {
 
 	expectedTypes := []ActivationRuleType{
 		ActivationRuleTypePercentage,
-		ActivationRuleTypeAttribute,
+		ActivationRuleTypeParameter,
 		ActivationRuleTypeUserID,
 		ActivationRuleTypeIP,
 		ActivationRuleTypeCountry,

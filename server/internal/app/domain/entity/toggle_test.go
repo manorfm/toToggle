@@ -223,7 +223,7 @@ func TestToggle_SetActivationRule(t *testing.T) {
 		{
 			name: "valid attribute rule",
 			rule: &ActivationRule{
-				Type:   ActivationRuleTypeAttribute,
+				Type:   ActivationRuleTypeParameter,
 				Value:  "premium",
 				Config: json.RawMessage(`{"context_key":"attributes.plan"}`),
 			},

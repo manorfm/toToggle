@@ -98,10 +98,12 @@ func newStrategyRegistry(zone *time.Location) *strategy.Registry {
 	reg := strategy.NewRegistry()
 
 	matchList := strategy.MatchListEvaluator{}
-	reg.Register(toggle.RuleTypeAttribute, matchList)
+	reg.Register(toggle.RuleTypeParameter, matchList)
 	reg.Register(toggle.RuleTypeUserID, matchList)
 	reg.Register(toggle.RuleTypeCountry, matchList)
-	reg.Register(toggle.RuleTypeCohort, matchList)
+	// v2.6.4: cohort stopped matching against a list — it now just checks whether the app sent
+	// any non-empty "cohort" context value. See strategy.PresenceEvaluator.
+	reg.Register(toggle.RuleTypeCohort, strategy.PresenceEvaluator{})
 
 	reg.Register(toggle.RuleTypePercentage, strategy.NewPercentageEvaluator(nil))
 	reg.Register(toggle.RuleTypeIP, strategy.IPEvaluator{})

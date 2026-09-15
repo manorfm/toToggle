@@ -2216,6 +2216,35 @@ substituíram um badge estático fictício ("build: passing" hardcoded, nunca li
       password"/"Sign out", omissão documentada do nome do time por custo de uma chamada extra),
       `ChangePasswordForm.tsx` (já confirmado numa fase anterior, sem mudança), `ConfirmModal.tsx`
       (label padrão "Confirm" já correto), `CreateTeamModal.tsx` (já batia com `TeamModal`).
+- ✅ **v2.6.4 — protótipo atualizado (`docs/toToggle v2.6.html` → `docs/toToggle v2.6.4.html`),
+  auditado tela por tela via design-graph (fork dedicado) contra as 10 telas indexadas.** Nenhum
+  endpoint, campo ou mudança de contrato novos — as 4 divergências reais encontradas eram todas
+  frontend-only, todas implementadas nesta mesma rodada:
+  - **Link "Documentation" no rodapé da sidebar** — confirmado em `get_full_jsx("App")`: `<a
+    className="nav-item" href="https://manorfm.github.io/toToggles/index.html" target="_blank"
+    rel="noopener">` com `Icon name="book"`, entre "Getting started" e o user-chip. Adicionado a
+    `AppShell.tsx` (mais `rel="noreferrer"` por segurança, além do `noopener` confirmado — prática
+    padrão pra link externo que o protótipo já tem implícita via `target="_blank"`).
+  - **`HelpTip` (novo componente)** — `components/HelpTip.tsx`, port 1:1 de
+    `get_component_full("HelpTip")`: ícone `help` com um balão via `ReactDOM.createPortal` pro
+    body, posicionado a partir do `getBoundingClientRect()` do próprio ícone, mostrado em
+    hover/focus. Usado ao lado do título "Activation rule" em `EditToggleDrawer.tsx`, com o texto
+    confirmado ("Optional condition that decides who gets this toggle..."). O protótipo real tem
+    um SEGUNDO uso (ao lado de "Context key", texto condicional fixo/editável) — não portado nesta
+    rodada porque nossa UI de context key já diverge estruturalmente da do protótipo (badge fixo
+    vs. input editável conforme `contextKeyEditable`, ver `lib/activationRuleTypes.ts`) e não fazia
+    parte do escopo acordado com o usuário; candidato a uma passada futura se pedido. CSS novo
+    (`.help-tip`/`.help-tip-bubble` + `@keyframes tipin`) em `global.css`, valores extraídos de
+    `get_full_styles("HelpTip")`.
+  - **Ícone dos tipos de regra "Cohort": `rocket` → `users`** — confirmado em
+    `get_component_data("Icon")` (o `ICONS` real do protótipo). `rocket` continua em uso (nav item
+    "Getting started"/onboarding), não removido do `Icon.tsx`.
+  - **Rótulo do tipo de regra "Attribute" → "Parameter"** — só o texto exibido
+    (`RuleTypeMeta.name`/`description`) mudou; o valor de wire (`type: "attribute"`, persistido/
+    validado no backend e consumido pelos 3 SDKs) foi deliberadamente MANTIDO — renomear o enum em
+    si seria breaking change de contrato público, fora do escopo combinado com o usuário.
+  - 655 testes de frontend verdes (1 teste ajustado — clique em "Attribute" virou "Parameter" em
+    `EditToggleDrawer.test.tsx`), `tsc`+`vite build` limpos.
 
 ### Status v2.6 — pendências reais conhecidas (última auditoria: 2026-09-07)
 

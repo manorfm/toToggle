@@ -321,7 +321,7 @@ describe("ApplicationDetailScreen", () => {
 
     await user.click(screen.getByRole("button", { name: /activation rule/i }));
     await user.click(screen.getByText("Percentage"));
-    await user.type(screen.getByLabelText(/percentage value/i), "25");
+    await user.type(screen.getByLabelText(/traffic percentage/i), "25");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await vi.waitFor(() => expect(ruleSet).toBe(true));
@@ -366,7 +366,7 @@ describe("ApplicationDetailScreen", () => {
     await screen.findByText("Status");
     await user.click(screen.getByRole("button", { name: /activation rule/i }));
     await user.click(screen.getByText("Percentage"));
-    await user.type(screen.getByLabelText(/percentage value/i), "25");
+    await user.type(screen.getByLabelText(/traffic percentage/i), "25");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     await vi.waitFor(() => expect(puts).toHaveLength(1));
 

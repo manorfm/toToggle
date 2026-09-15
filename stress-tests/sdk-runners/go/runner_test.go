@@ -17,7 +17,7 @@ func TestRunnerEvaluatesWithRequestLocalDomainAndNetworkContext(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"application":{"toggles":[
-			{"path":"payments.card","enabled":true,"has_activation_rule":true,"activation_rule":{"type":"attribute","value":"pro","config":{"context_key":"attributes.plan"}}},
+			{"path":"payments.card","enabled":true,"has_activation_rule":true,"activation_rule":{"type":"parameter","value":"pro","config":{"context_key":"attributes.plan"}}},
 			{"path":"network.v6","enabled":true,"has_activation_rule":true,"activation_rule":{"type":"ip","value":"2001:db8::/32","config":{"context_key":"ip"}}},
 			{"path":"location.br","enabled":true,"has_activation_rule":true,"activation_rule":{"type":"country","value":"BR","config":{"context_key":"country"}}}
 		]}}`))

@@ -7,8 +7,10 @@ import (
 )
 
 // MatchListEvaluator implements the "comma-separated allowlist, exact trimmed match" shape
-// shared by four otherwise-identical rule types (attribute, user_id, country, cohort). One implementation registered
-// under all four types, instead of four copies of the same logic.
+// shared by three otherwise-identical rule types (parameter, user_id, country). One
+// implementation registered under all three types, instead of three copies of the same logic.
+// Cohort used to share this evaluator too, but v2.6.4 changed its semantics to a presence check
+// instead of a list match — see PresenceEvaluator in presence.go.
 type MatchListEvaluator struct{}
 
 // Evaluate reports whether key exactly matches one entry of rule.Value's comma-separated list,

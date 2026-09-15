@@ -2,10 +2,12 @@ import type { ActivationRule } from "../toggle/rule.js";
 import type { Evaluator } from "./strategy.js";
 
 /**
- * Implements the "comma-separated allowlist, exact trimmed match" shape shared by four
- * otherwise-identical rule types (attribute, user_id, country, cohort)
- * hints describe all four the same way). One implementation registered under all four types,
- * instead of four copies of the same logic.
+ * Implements the "comma-separated allowlist, exact trimmed match" shape shared by three
+ * otherwise-identical rule types (parameter, user_id, country). One implementation registered
+ * under all three types, instead of three copies of the same logic.
+ *
+ * "cohort" used to be a fourth member of this group but stopped comparing `value` in v2.6.4 —
+ * see PresenceEvaluator instead.
  */
 export class MatchListEvaluator implements Evaluator {
   evaluate(rule: ActivationRule, key: string | undefined): boolean {

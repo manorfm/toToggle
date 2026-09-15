@@ -6,6 +6,7 @@ import type { Toggle } from "./internal/toggle/toggle.js";
 import { fetchToggles } from "./internal/serverapi/fetch.js";
 import { Registry } from "./internal/strategy/strategy.js";
 import { MatchListEvaluator } from "./internal/strategy/matchlist.js";
+import { PresenceEvaluator } from "./internal/strategy/presence.js";
 import { PercentageEvaluator } from "./internal/strategy/percentage.js";
 import { IpEvaluator } from "./internal/strategy/ip.js";
 import { TimeWindowEvaluator } from "./internal/strategy/timewindow.js";
@@ -37,10 +38,12 @@ function buildRegistry(timeZone: string | undefined): Registry {
   const registry = new Registry();
 
   const matchList = new MatchListEvaluator();
-  registry.register("attribute", matchList);
+  registry.register("parameter", matchList);
   registry.register("user_id", matchList);
   registry.register("country", matchList);
-  registry.register("cohort", matchList);
+  // v2.6.4: cohort stopped comparing `value` against a list — it's a presence check now (see
+  // PresenceEvaluator), no longer the same shape as parameter/user_id/country.
+  registry.register("cohort", new PresenceEvaluator());
 
   registry.register("percentage", new PercentageEvaluator());
   registry.register("ip", new IpEvaluator());

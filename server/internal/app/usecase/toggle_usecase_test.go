@@ -930,7 +930,7 @@ func TestToggleUseCase_UpdateToggleWithRule(t *testing.T) {
 			enabled:           true,
 			hasActivationRule: true,
 			activationRule: &entity.ActivationRule{
-				Type:   entity.ActivationRuleTypeAttribute,
+				Type:   entity.ActivationRuleTypeParameter,
 				Value:  "premium",
 				Config: json.RawMessage(`{"context_key":"attributes.plan"}`),
 			},

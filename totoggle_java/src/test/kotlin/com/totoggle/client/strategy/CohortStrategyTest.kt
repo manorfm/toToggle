@@ -13,28 +13,40 @@ class CohortStrategyTest {
         assertThat(strategy.getRuleType()).isEqualTo("cohort")
     }
 
+    // v2.6.4: cohort stopped comparing `value` against a list — it's a presence check on the
+    // resolved context value now. `rule.value` is irrelevant to evaluation (see tests below that
+    // deliberately vary it while asserting the same outcome).
+
     @Test
     fun `should return false when no cohort identifier provided`() {
-        val rule = ActivationRule("cohort", "canary")
+        val rule = ActivationRule("cohort", "")
 
         assertThat(strategy.evaluate(rule)).isFalse()
         assertThat(strategy.evaluate(rule, null)).isFalse()
     }
 
     @Test
-    fun `should match a named cohort`() {
-        val rule = ActivationRule("cohort", "canary")
+    fun `should return false when the resolved context value is blank`() {
+        val rule = ActivationRule("cohort", "")
 
-        assertThat(strategy.evaluate(rule, "canary")).isTrue()
-        assertThat(strategy.evaluate(rule, "stable")).isFalse()
+        assertThat(strategy.evaluate(rule, "")).isFalse()
+        assertThat(strategy.evaluate(rule, "   ")).isFalse()
     }
 
     @Test
-    fun `should match any cohort in a comma-separated allowlist`() {
-        val rule = ActivationRule("cohort", "beta-ring,internal")
+    fun `should activate on any non-blank context value, ignoring rule value content`() {
+        val rule = ActivationRule("cohort", "")
 
-        assertThat(strategy.evaluate(rule, "beta-ring")).isTrue()
         assertThat(strategy.evaluate(rule, "internal")).isTrue()
-        assertThat(strategy.evaluate(rule, "stable")).isFalse()
+        assertThat(strategy.evaluate(rule, "some-label-not-in-any-list")).isTrue()
+    }
+
+    @Test
+    fun `should activate regardless of a legacy comma-separated rule value from before v2_6_4`() {
+        val rule = ActivationRule("cohort", "canary,beta")
+
+        assertThat(strategy.evaluate(rule, "stable")).isTrue() // not in the legacy list, still activates
+        assertThat(strategy.evaluate(rule, "anything")).isTrue()
+        assertThat(strategy.evaluate(rule, "")).isFalse() // still fails closed on no context value
     }
 }

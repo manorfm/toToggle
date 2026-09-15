@@ -2,14 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { ActivationRule } from "../toggle/rule.js";
 import { MatchListEvaluator } from "./matchlist.js";
 
-// MatchListEvaluator is the one implementation shared by attribute, user_id, country, and cohort
-// — all four are "comma-separated allowlist, exact trimmed match" per the confirmed contract,
-// so this is a single reused type rather than four near-identical copies.
+// MatchListEvaluator is the one implementation shared by parameter, user_id, and country — all
+// three are "comma-separated allowlist, exact trimmed match" per the confirmed contract, so this
+// is a single reused type rather than three near-identical copies. "cohort" used to be a fourth
+// member of this group but stopped comparing `value` in v2.6.4 — see presence.test.ts instead.
 describe("MatchListEvaluator", () => {
   const evaluator = new MatchListEvaluator();
 
   it("matches one of the comma-separated values", () => {
-    const rule: ActivationRule = { type: "attribute", value: "premium,enterprise" };
+    const rule: ActivationRule = { type: "parameter", value: "premium,enterprise" };
     expect(evaluator.evaluate(rule, "premium")).toBe(true);
     expect(evaluator.evaluate(rule, "enterprise")).toBe(true);
     expect(evaluator.evaluate(rule, "basic")).toBe(false);
@@ -29,12 +30,12 @@ describe("MatchListEvaluator", () => {
   });
 
   it("never matches a blank rule value", () => {
-    const rule: ActivationRule = { type: "cohort", value: "   " };
+    const rule: ActivationRule = { type: "parameter", value: "   " };
     expect(evaluator.evaluate(rule, "true")).toBe(false);
   });
 
   it("an empty-string key can match an empty list entry", () => {
-    const rule: ActivationRule = { type: "cohort", value: "canary," };
+    const rule: ActivationRule = { type: "parameter", value: "canary," };
     expect(evaluator.evaluate(rule, "")).toBe(true);
   });
 });

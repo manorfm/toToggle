@@ -22,7 +22,7 @@ them with cascading validation and 7 activation rule types.
 - **Hierarchical toggles** (`service.feature.flag`) with cascading validation — a disabled parent
   disables every descendant, regardless of the child's own state
 - **7 activation rule types**: percentage rollout (consistent per-key hashing), named context
-  attribute, user ID, IP/CIDR, country, time window, and cohort
+  parameter, user ID, IP/CIDR, country, time window, and cohort (presence-based, v2.6.4)
 - **Role-based access control**: `root`/`admin`/`user`, with teams scoping which applications an
   admin can manage
 - **Optional approval workflow**: gate selected mutation types (toggle delete, rule changes,
@@ -165,15 +165,26 @@ If `user` or `payments` is disabled, `view-table` will automatically be inactive
 ```
 Activates for ~25% of requests using consistent hashing.
 
-**Attribute Strategy:**
+**Parameter Strategy:** (renamed from "attribute" in v2.6.4 — same wire type, not just a label)
 ```json
 {
-  "type": "attribute",
+  "type": "parameter",
   "value": "premium,enterprise",
   "config": { "context_key": "attributes.plan" }
 }
 ```
-Activates when the named context attribute matches the configured values.
+Activates when the named context parameter matches the configured values.
+
+**Cohort Strategy:** (v2.6.4 — no longer a comma-separated list match)
+```json
+{
+  "type": "cohort",
+  "value": "",
+  "config": { "context_key": "cohort" }
+}
+```
+Activates whenever the app supplies any non-empty `cohort` context value — a presence check, not
+a match against a named list. `value` is unused.
 
 ### 🛡️ Resilience & Performance
 
@@ -386,5 +397,5 @@ information, configure the SDK's request-context resolver in application middlew
 Network fields come only from the SDK's trusted HTTP adapter/resolver configuration; application
 values cannot overwrite them. A missing field or resolver failure evaluates to `false`;
 `isActive` always fails closed and never propagates an exception. `percentage: 25` enables 25%
-of the keyed population; `cohort` matches named cohorts such as `canary` or `beta`, not
-`true`/`false`.
+of the keyed population; `cohort` (v2.6.4) activates whenever the app supplies any non-empty
+`cohort` context value — a presence check, not a match against a named list like `canary`/`beta`.

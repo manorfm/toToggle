@@ -446,6 +446,12 @@ export function AppShell() {
         )}
 
         <div className="sidebar-foot" style={{ position: "relative" }}>
+          {/* v2.6.4 — confirmado em get_full_jsx("App"): link externo pra documentação, entre
+              "Getting started" e o user-chip. "Light/Dark mode" continua deliberadamente fora
+              (app só suporta tema escuro, ver nota em server/CLAUDE.md). */}
+          <a className="nav-item" href="https://manorfm.github.io/toToggles/index.html" target="_blank" rel="noopener noreferrer">
+            <Icon name="book" size={17} /> Documentation
+          </a>
           <button className="user-chip" onClick={() => setMenuOpen((open) => !open)}>
             <div className="avatar">{user.username.slice(0, 2).toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>

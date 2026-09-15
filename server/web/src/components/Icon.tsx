@@ -32,7 +32,9 @@ export type IconName =
   | "star"
   | "shield"
   | "chevright"
-  | "code";
+  | "code"
+  | "book"
+  | "help";
 
 interface IconProps {
   name: IconName;
@@ -244,6 +246,16 @@ const paths: Record<IconName, JSX.Element> = {
     <>
       <path d="M16 18l6-6-6-6" />
       <path d="M8 6l-6 6 6 6" />
+    </>
+  ),
+  // v2.6.4 — confirmados via get_component_data("Icon") depois da atualização do protótipo:
+  // "book" (link "Documentation" no rodapé da sidebar) e "help" (novo componente HelpTip).
+  book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z" />,
+  help: (
+    <>
+      <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" />
+      <path d="M9.09 9a3 3 0 1 1 5.83 1c-.4 1.2-2.42 1.5-2.92 3" />
+      <path d="M12 17h.01" />
     </>
   ),
 };

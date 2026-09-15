@@ -460,7 +460,7 @@ func TestGetTogglesBySecret_RevisionChangesOnlyWhenVisibleCatalogueChanges(t *te
 	}
 
 	toggle.ActivationRule = &entity.ActivationRule{
-		Type:   entity.ActivationRuleTypeAttribute,
+		Type:   entity.ActivationRuleTypeParameter,
 		Value:  "premium",
 		Config: json.RawMessage(`{"context_key":"attributes.plan"}`),
 	}

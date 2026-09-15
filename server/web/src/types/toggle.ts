@@ -37,8 +37,10 @@ export type SetToggleEnabledResult =
   | { kind: "updated" }
   | { kind: "pending_approval"; actionType: string };
 
-// Espelha entity.ActivationRuleType/ActivationRule.
-export type ActivationRuleType = "percentage" | "attribute" | "user_id" | "ip" | "country" | "time" | "cohort";
+// Espelha entity.ActivationRuleType/ActivationRule. "parameter" era "attribute" até o protótipo
+// v2.6.4 renomear o tipo (não só o rótulo de UI) — ver server/CLAUDE.md e
+// db/migrations/20260914000000_rename_attribute_rule_type_to_parameter.sql.
+export type ActivationRuleType = "percentage" | "parameter" | "user_id" | "ip" | "country" | "time" | "cohort";
 
 export interface ActivationRule {
   // "" confirmado ao vivo: quando has_activation_rule é false, o servidor devolve

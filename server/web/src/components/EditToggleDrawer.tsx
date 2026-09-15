@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { ApprovalInterceptModal } from "./ApprovalInterceptModal";
 import { DottedPath } from "./DottedPath";
+import { HelpTip } from "./HelpTip";
 import { Icon } from "./Icon";
 import { ApiError } from "../api/client";
 import { getToggle, updateToggleRule } from "../api/toggles";
 import { useToast } from "./ToastProvider";
 import { useApprovalIntercept } from "../hooks/useApprovalIntercept";
-import { RULE_TYPES, deriveInitialRuleState } from "../lib/activationRuleTypes";
+import { RULE_TYPES, deriveInitialRuleState, hasValueField } from "../lib/activationRuleTypes";
 import type { ActivationRule, ActivationRuleType, ToggleDetail } from "../types/toggle";
 
 // Snapshot pré-edição de um toggle (bit próprio + regra) — capturado no load do drawer, antes de
@@ -114,9 +115,24 @@ export function EditToggleDrawer({
 
   async function save() {
     if (loadState.status !== "loaded") return;
-    if (ruleOn && (!ruleType || !effectiveRuleValue.trim() || (selectedRuleMeta?.contextKey && !contextKey.trim()))) {
-      setError(`${selectedRuleMeta?.name ?? "Rule"} value is required.`);
-      return;
+    if (ruleOn) {
+      if (!ruleType) {
+        setError("Select a rule type.");
+        return;
+      }
+      // v2.6.4: cohort não tem campo de valor (hasValueField(false)) — checar effectiveRuleValue
+      // pra ele sempre falharia, já que nada nunca preenche ruleValue pra esse tipo.
+      if (hasValueField(ruleType) && !effectiveRuleValue.trim()) {
+        setError(`${selectedRuleMeta?.name ?? "Rule"} value is required.`);
+        return;
+      }
+      // selectedRuleMeta?.contextKey pode ser "" de propósito (default vazio do tipo Parameter,
+      // v2.6.4) — comparar contra `undefined`, não truthiness, pra não pular a checagem só
+      // porque o valor atual está vazio. Só "time" nunca define contextKey (não tem essa seção).
+      if (selectedRuleMeta?.contextKey !== undefined && !contextKey.trim()) {
+        setError("Context key is required.");
+        return;
+      }
     }
 
     // Mesma inferência do servidor (middleware/approval.go#getActionType): o endpoint plural
@@ -132,7 +148,14 @@ export function EditToggleDrawer({
         const result = await updateToggleRule(applicationId, toggleId, {
           enabled,
           hasActivationRule: ruleOn,
-          activationRule: ruleOn && ruleType ? { type: ruleType, value: effectiveRuleValue.trim(), config: selectedRuleMeta?.contextKey ? { context_key: contextKey.trim() } : null } : undefined,
+          activationRule:
+            ruleOn && ruleType
+              ? {
+                  type: ruleType,
+                  value: hasValueField(ruleType) ? effectiveRuleValue.trim() : "",
+                  config: selectedRuleMeta?.contextKey !== undefined ? { context_key: contextKey.trim() } : null,
+                }
+              : undefined,
         });
         if (result.kind === "pending_approval") {
           onPendingApproval(result.actionType);
@@ -222,8 +245,14 @@ export function EditToggleDrawer({
 
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                  <div className="section-h" style={{ margin: 0 }}>
-                    Activation rule
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div className="section-h" style={{ margin: 0 }}>
+                      Activation rule
+                    </div>
+                    <HelpTip
+                      size={15}
+                      text="Optional condition that decides who gets this toggle. Off means everyone who reaches it, on lets you target by percentage, user, cohort and more."
+                    />
                   </div>
                   <button
                     role="button"
@@ -252,7 +281,18 @@ export function EditToggleDrawer({
                     </div>
                     {selectedRuleMeta && (
                       <div className="field" style={{ marginTop: 14 }}>
-                        {selectedRuleMeta.type === "time" ? (
+                        {/* v2.6.4 — teaser novo, mostrado sempre que um tipo está selecionado
+                            (get_component_data("EditDrawer")#RULE_TYPES[].explain). */}
+                        <div className="field-hint" style={{ marginBottom: 10 }}>
+                          {selectedRuleMeta.explain}
+                        </div>
+                        {selectedRuleMeta.type === "cohort" ? (
+                          // v2.6.4 — cohort deixou de ter campo de valor, confirmado literalmente
+                          // no EditDrawer real ("No value needed, just turn it on for this
+                          // cohort."). O hint abaixo (true/false) é um acréscimo nosso, mantido
+                          // pelo mesmo motivo dos demais tipos — ver header do arquivo de dados.
+                          <div className="field-hint">No value needed, just turn it on for this cohort.</div>
+                        ) : selectedRuleMeta.type === "time" ? (
                           <>
                             <label className="field-label" htmlFor="rule-time-start">
                               Time window (daily, server timezone)
@@ -283,6 +323,26 @@ export function EditToggleDrawer({
                               />
                             </div>
                           </>
+                        ) : selectedRuleMeta.type === "percentage" ? (
+                          <>
+                            <label className="field-label" htmlFor="rule-value">
+                              Traffic percentage
+                            </label>
+                            <input
+                              className="input mono"
+                              id="rule-value"
+                              type="number"
+                              min={0}
+                              max={100}
+                              step="0.01"
+                              placeholder={selectedRuleMeta.placeholder}
+                              value={ruleValue}
+                              onChange={(e) => {
+                                setRuleValue(e.target.value);
+                                setError(null);
+                              }}
+                            />
+                          </>
                         ) : (
                           <>
                             <label className="field-label" htmlFor="rule-value">
@@ -291,10 +351,7 @@ export function EditToggleDrawer({
                             <input
                               className="input mono"
                               id="rule-value"
-                              type={selectedRuleMeta.type === "percentage" ? "number" : "text"}
-                              min={selectedRuleMeta.type === "percentage" ? 0 : undefined}
-                              max={selectedRuleMeta.type === "percentage" ? 100 : undefined}
-                              step={selectedRuleMeta.type === "percentage" ? "0.01" : undefined}
+                              type="text"
                               placeholder={selectedRuleMeta.placeholder}
                               value={ruleValue}
                               onChange={(e) => {
@@ -304,24 +361,34 @@ export function EditToggleDrawer({
                             />
                           </>
                         )}
-                        <div className="field-hint">{selectedRuleMeta.hint}</div>
-                        {selectedRuleMeta.contextKey && (
+                        {hasValueField(selectedRuleMeta.type) && <div className="field-hint">{selectedRuleMeta.hint}</div>}
+                        {selectedRuleMeta.type === "cohort" && <div className="field-hint">{selectedRuleMeta.hint}</div>}
+                        {selectedRuleMeta.contextKey !== undefined && (
                           <>
-                            <label className="field-label" htmlFor="rule-context-key" style={{ marginTop: 12 }}>
-                              Context key
-                            </label>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
+                              <label className="field-label" htmlFor="rule-context-key" style={{ margin: 0 }}>
+                                Context key
+                              </label>
+                              <HelpTip
+                                text={
+                                  selectedRuleMeta.contextKeyEditable
+                                    ? "The field name your app sends per request. The SDK looks this up in its context and compares it to the value above."
+                                    : "The field name this rule always compares against. Your SDK resolves it for you, so there's nothing to type."
+                                }
+                              />
+                            </div>
                             <input
                               className="input mono"
                               id="rule-context-key"
                               value={contextKey}
                               disabled={!selectedRuleMeta.contextKeyEditable}
-                              placeholder={selectedRuleMeta.contextKeyEditable ? "rollout_key or attributes.account_id" : undefined}
+                              placeholder={selectedRuleMeta.contextKeyEditable ? selectedRuleMeta.contextKeyPlaceholder : undefined}
                               onChange={(e) => setContextKey(e.target.value)}
                             />
                             <div className="field-hint">
                               {selectedRuleMeta.contextKeyEditable
-                                ? "The name your app's SDK integration must supply in its request context for this exact value — configure that in your SDK integration, not here."
-                                : `Fixed for this rule type: the SDK always resolves "${selectedRuleMeta.contextKey}" automatically. Nothing to configure here.`}
+                                ? selectedRuleMeta.contextKeyHint
+                                : "Sent automatically by the SDK for this rule type, nothing to set."}
                             </div>
                           </>
                         )}

@@ -23,7 +23,7 @@ class StrategyFactory(timeZone: ZoneId = ZoneId.systemDefault()) {
         // Match-based rule types cannot pass without a context value. Percentage uses a stable
         // rollout key and time uses the configured clock instead.
         private val TYPES_REQUIRING_CONTEXT = setOf(
-            ActivationRule.TYPE_ATTRIBUTE,
+            ActivationRule.TYPE_PARAMETER,
             ActivationRule.TYPE_USER_ID,
             ActivationRule.TYPE_IP,
             ActivationRule.TYPE_COUNTRY,
@@ -33,7 +33,7 @@ class StrategyFactory(timeZone: ZoneId = ZoneId.systemDefault()) {
 
     init {
         registerStrategy(PercentageStrategy())
-        registerStrategy(AttributeStrategy())
+        registerStrategy(ParameterStrategy())
         registerStrategy(UserIdStrategy())
         registerStrategy(IpStrategy())
         registerStrategy(CountryStrategy())

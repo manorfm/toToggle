@@ -39,7 +39,7 @@ func toggleJSON(id, path, value string, enabled bool, level int, parentID string
 	}
 	rule := "null"
 	if hasRule {
-		contextKey := map[string]string{"percentage": "rollout_key", "attribute": "attributes.plan", "user_id": "user_id", "ip": "ip", "country": "country", "cohort": "cohort"}[ruleType]
+		contextKey := map[string]string{"percentage": "rollout_key", "parameter": "attributes.plan", "user_id": "user_id", "ip": "ip", "country": "country", "cohort": "cohort"}[ruleType]
 		config := ""
 		if contextKey != "" {
 			config = `,"config":{"context_key":"` + contextKey + `"}`
@@ -210,7 +210,7 @@ func TestClient_IsActive_AllAncestorsEnabledNoRules_ReturnsTrue(t *testing.T) {
 
 func TestClient_AncestorRuleDoesNotAffectDescendant(t *testing.T) {
 	srv, _ := jsonServer(t, applicationJSON(
-		toggleJSON("1", "t1", "t1", true, 0, "", true, "attribute", "premium,enterprise"),
+		toggleJSON("1", "t1", "t1", true, 0, "", true, "parameter", "premium,enterprise"),
 		toggleJSON("2", "t1.t2", "t2", true, 1, "1", false, "", ""),
 	))
 	client := newTestClient(t, srv.URL, WithRefreshInterval(time.Hour))

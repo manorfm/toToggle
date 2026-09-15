@@ -111,18 +111,33 @@
           }
         },
         {
-          "id": "payments-invalid-attribute-context",
-          "path": "payments.invalid-attribute-context",
-          "value": "invalid-attribute-context",
+          "id": "payments-invalid-parameter-context",
+          "path": "payments.invalid-parameter-context",
+          "value": "invalid-parameter-context",
           "enabled": true,
           "level": 1,
           "parent_id": "payments",
           "app_id": "contract-app",
           "has_activation_rule": true,
           "activation_rule": {
-            "type": "attribute",
+            "type": "parameter",
             "value": "premium",
             "config": { "context_key": "user_id" }
+          }
+        },
+        {
+          "id": "payments-cohort-gate",
+          "path": "payments.cohort-gate",
+          "value": "cohort-gate",
+          "enabled": true,
+          "level": 1,
+          "parent_id": "payments",
+          "app_id": "contract-app",
+          "has_activation_rule": true,
+          "activation_rule": {
+            "type": "cohort",
+            "value": "",
+            "config": { "context_key": "cohort" }
           }
         },
         {
@@ -233,11 +248,35 @@
       "resolver_calls": 0
     },
     {
-      "name": "invalid attribute context pair fails closed before resolution",
-      "path": "payments.invalid-attribute-context",
+      "name": "invalid parameter context pair fails closed before resolution",
+      "path": "payments.invalid-parameter-context",
       "context": { "user_id": "user-1" },
       "expected": false,
       "resolver_calls": 0
+    },
+    {
+      "name": "cohort rule activates on any non-empty cohort context value, regardless of content",
+      "path": "payments.cohort-gate",
+      "context": { "cohort": "internal" },
+      "expected": true
+    },
+    {
+      "name": "cohort rule activates for any cohort value, not a specific named list",
+      "path": "payments.cohort-gate",
+      "context": { "cohort": "some-other-label-not-in-any-list" },
+      "expected": true
+    },
+    {
+      "name": "cohort rule fails closed without a cohort context value",
+      "path": "payments.cohort-gate",
+      "context": {},
+      "expected": false
+    },
+    {
+      "name": "cohort rule fails closed when the cohort context value is an empty string",
+      "path": "payments.cohort-gate",
+      "context": { "cohort": "" },
+      "expected": false
     },
     {
       "name": "time rule with context pair fails closed before resolution",

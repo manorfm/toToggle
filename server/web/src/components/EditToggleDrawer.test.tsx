@@ -144,7 +144,7 @@ describe("EditToggleDrawer", () => {
     await user.click(screen.getByRole("button", { name: /activation rule/i }));
     await user.click(screen.getByText("Percentage"));
 
-    const valueInput = screen.getByLabelText(/percentage value/i);
+    const valueInput = screen.getByLabelText(/traffic percentage/i);
     expect(valueInput).toHaveAttribute("type", "number");
     expect(valueInput).toHaveAttribute("min", "0");
     expect(valueInput).toHaveAttribute("max", "100");
@@ -169,7 +169,7 @@ describe("EditToggleDrawer", () => {
 
     await user.click(screen.getByText("Percentage"));
 
-    expect(screen.getByLabelText(/percentage value/i)).toHaveValue(null);
+    expect(screen.getByLabelText(/traffic percentage/i)).toHaveValue(null);
   });
 
   it("configures a time window with two time pickers, composing HH:mm-HH:mm on save", async () => {
@@ -226,7 +226,7 @@ describe("EditToggleDrawer", () => {
     expect(screen.getByLabelText(/end time/i)).toHaveValue("06:00");
   });
 
-  it("describes canonical request-context resolution for attribute rules", async () => {
+  it("describes canonical request-context resolution for parameter rules", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, toggle)));
     const user = userEvent.setup();
 
@@ -236,9 +236,9 @@ describe("EditToggleDrawer", () => {
     await screen.findByText("Status");
 
     await user.click(screen.getByRole("button", { name: /activation rule/i }));
-    await user.click(screen.getByText("Attribute"));
+    await user.click(screen.getByText("Parameter"));
 
-    expect(screen.getByText(/configure that in your SDK integration, not here/i)).toBeInTheDocument();
+    expect(screen.getByText(/field your app sends with the value to match/i)).toBeInTheDocument();
     expect(screen.queryByText(/ToggleContextProvider/)).not.toBeInTheDocument();
   });
 
@@ -263,7 +263,7 @@ describe("EditToggleDrawer", () => {
 
     await user.click(screen.getByRole("button", { name: /activation rule/i }));
     await user.click(screen.getByText("Percentage"));
-    await user.type(screen.getByLabelText(/percentage value/i), "25");
+    await user.type(screen.getByLabelText(/traffic percentage/i), "25");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -308,7 +308,7 @@ describe("EditToggleDrawer", () => {
 
     await user.click(screen.getByRole("button", { name: /activation rule/i }));
     await user.click(screen.getByText("Percentage"));
-    await user.type(screen.getByLabelText(/percentage value/i), "25");
+    await user.type(screen.getByLabelText(/traffic percentage/i), "25");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await vi.waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));

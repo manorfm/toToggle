@@ -203,8 +203,8 @@ class ToToggleClientTest {
     }
     
     @Test
-    fun `should evaluate attribute activation rules`() {
-        mockResponseWithAttributeRule()
+    fun `should evaluate parameter activation rules`() {
+        mockResponseWithParameterRule()
         client.start()
         
         contextValues["attributes.plan"] = "premium"
@@ -237,7 +237,7 @@ class ToToggleClientTest {
         val scopedClient = ToToggleClient(config.copy(contextResolver = resolver))
 
         try {
-            mockResponseWithAttributeRule()
+            mockResponseWithParameterRule()
             scopedClient.start()
 
             assertThat(scopedClient.isActive("user.payments.view-table")).isFalse()
@@ -959,7 +959,7 @@ class ToToggleClientTest {
             .setHeader("Content-Type", "application/json"))
     }
     
-    private fun mockResponseWithAttributeRule() {
+    private fun mockResponseWithParameterRule() {
         val responseBody = """
             {
                 "application": {
@@ -997,7 +997,7 @@ class ToToggleClientTest {
                             "parent_id": "toggle-2",
                             "app_id": "app-123",
                             "has_activation_rule": true,
-                            "activation_rule": {"type": "attribute", "value": "premium", "config": {"context_key": "attributes.plan"}}
+                            "activation_rule": {"type": "parameter", "value": "premium", "config": {"context_key": "attributes.plan"}}
                         }
                     ]
                 }

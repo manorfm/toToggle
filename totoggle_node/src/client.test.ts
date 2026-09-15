@@ -100,7 +100,7 @@ function toggleJson(
           type: ruleType,
           value: ruleValue,
           config: {
-            context_key: ({ percentage: "rollout_key", attribute: "attributes.plan", user_id: "user_id", ip: "ip", country: "country", cohort: "cohort" } as Record<string, string>)[ruleType ?? ""],
+            context_key: ({ percentage: "rollout_key", parameter: "attributes.plan", user_id: "user_id", ip: "ip", country: "country", cohort: "cohort" } as Record<string, string>)[ruleType ?? ""],
           },
         }
       : null,
@@ -432,7 +432,7 @@ describe("ToToggleClient", () => {
 
   it("an ancestor's activation rule does not affect a descendant", async () => {
     const { url } = await fixedResponseServer([
-      toggleJson("1", "t1", true, 0, null, true, "attribute", "premium,enterprise"),
+      toggleJson("1", "t1", true, 0, null, true, "parameter", "premium,enterprise"),
       toggleJson("2", "t1.t2", true, 1, "1", false),
     ]);
     const client = new ToToggleClient(

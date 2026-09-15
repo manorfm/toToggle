@@ -56,7 +56,8 @@ toToogle/
 - **Simple API**: Easy-to-use interface for checking feature toggle status
 - **Cascading Validation**: Automatic validation of parent toggles
 - **Activation Strategies**: Support for all 7 server-defined rule types — percentage (consistent
-  per-key hashing), attribute, user ID, IP address/CIDR, country, time window, and cohort
+  per-key hashing), parameter, user ID, IP address/CIDR, country, time window, and cohort (v2.6.4:
+  cohort activates on presence of a resolved context value, not a match against a named list)
 - **Caching & Resilience**: Efficient caching with offline mode support, configurable refresh
   interval — `isActive()` never blocks on the network, always answers from memory
 - **Observability**: staleness-aware health check (`isHealthy()`/`isStale()`), consecutive-failure
@@ -226,7 +227,10 @@ user or network data at each call site. The resolver exposes only the configured
   bucket everywhere, while an ephemeral value (a raw client IP, which changes across NAT/mobile
   networks/proxies, or anything else that can differ between two requests from the same person)
   silently produces inconsistent results for that person even within a single service.
-- `cohort` is a server-owned deployment or experiment ring, such as `beta`.
+- `cohort` is a server-owned deployment or experiment ring, such as `beta`. Since v2.6.4 the
+  server-side rule only checks that this resolves to a non-blank value at all — it no longer
+  matches its content against an admin-configured list, so your app decides who gets a cohort
+  value in the first place, not toToggle.
 - `attributes` uses unprefixed names (`"plan"` becomes `attributes.plan`).
 
 `ip` and `country` are transport-owned. The domain context cannot overwrite them.
