@@ -344,8 +344,8 @@ export function ApprovalsScreen() {
           {requestsState.status === "loading" && <div className="empty">Carregando…</div>}
           {requestsState.status === "error" && <div className="empty">{requestsState.message}</div>}
           {requestsState.status === "loaded" && requestsState.requests.length === 0 && (
-            <div className="empty">
-              <Icon name={tab === "pending" ? "check" : tab === "mine" ? "user" : "history"} size={40} />
+            <div className="empty compact">
+              <Icon name={tab === "pending" ? "check" : tab === "mine" ? "user" : "history"} size={26} />
               <div className="et">{tab === "pending" ? "All clear" : "No records"}</div>
               <div className="ed">{tab === "pending" ? "No pending requests." : "Nothing here yet."}</div>
             </div>

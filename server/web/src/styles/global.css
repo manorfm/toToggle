@@ -541,11 +541,14 @@ input[type="checkbox"] {
 }
 /* Variante compacta de .empty (usada junto, className="empty compact") — uma caixa com moldura
    própria em vez do vazio de página inteira. Confirmado via design-graph (get_component_spec(".compact")),
-   reusada por ApprovalsView e TeamsView — só TeamsView (TeamMembersSection.tsx) consome de fato
-   hoje. Bug real corrigido: essa classe nunca tinha sido extraída pro CSS, então
-   `className="empty compact"` caía só no `.empty` genérico (padding 70px, sem borda/fundo),
-   perdendo a caixa com moldura que o protótipo mostra. Precisa vir DEPOIS de `.empty` no arquivo
-   — mesma especificidade (uma classe só), o padding daqui precisa vencer o de `.empty` na cascata. */
+   reusada por ApprovalsView e TeamsView. Bug real corrigido: essa classe nunca tinha sido extraída
+   pro CSS, então `className="empty compact"` caía só no `.empty` genérico (padding 70px, sem
+   borda/fundo), perdendo a caixa com moldura que o protótipo mostra. Precisa vir DEPOIS de
+   `.empty` no arquivo — mesma especificidade (uma classe só), o padding daqui precisa vencer o de
+   `.empty` na cascata. Achado numa auditoria posterior: `ApprovalsScreen.tsx` continuava usando só
+   `.empty` (sem `compact`) e `size={40}` no ícone — o CSS já suportava a variante confirmada, só
+   não estava sendo consumida ali; corrigido pra `className="empty compact"` + `size={26}`, igual
+   ao confirmado em `get_full_jsx("ApprovalsView")` e ao que `TeamMembersSection.tsx` já fazia. */
 .compact {
   padding: 30px 20px;
   border: 1px solid var(--border);
