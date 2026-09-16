@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, useState } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./AppShell";
 import { useSetOpenApp } from "../hooks/useSetOpenApp";
 import type { ApplicationDetailTab } from "../hooks/useAppUser";
@@ -68,6 +68,15 @@ function renderShell(initialPath = "/") {
 }
 
 describe("AppShell", () => {
+  // Root agora abre o wizard de onboarding sozinho quando `totoggle_v2_onboarded` não está
+  // setado (ver AppShell.tsx — correção do bug real "primeiro login do root não mostrava o
+  // tour"). Sem esse default, todo teste de root pré-existente que não é sobre onboarding
+  // passaria a renderizar o modal por cima sem querer; o describe "Onboarding wizard nav item"
+  // abaixo limpa isso explicitamente quando precisa testar o estado "ainda não onboarded".
+  beforeEach(() => {
+    window.localStorage.setItem("totoggle_v2_onboarded", "1");
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
     window.localStorage.clear();
@@ -713,17 +722,37 @@ describe("AppShell", () => {
   // v2.6 §6.7-6.9: onboarding wizard nav item — root only (creating a team, the wizard's first
   // step, is RequireRoot() on the backend, so no other role could ever finish it).
   describe("Onboarding wizard nav item (v2.6 §6.7-6.9)", () => {
-    it("shows 'Getting started' for root and opens the wizard on click", async () => {
+    // Bug real reportado pelo usuário: o primeiro login do root nunca mostrava o tour — nada
+    // além do clique manual no item de nav abria o modal. Corrigido com um efeito em
+    // AppShell.tsx que abre o wizard sozinho assim que o perfil autenticado carrega, se
+    // `totoggle_v2_onboarded` ainda não estiver setado.
+    it("auto-opens the wizard for root on the very first login (not yet onboarded)", async () => {
+      window.localStorage.removeItem("totoggle_v2_onboarded");
       vi.stubGlobal("fetch", mockFetch({ id: "1", username: "root", role: "root", must_change_password: false }));
-      const user = userEvent.setup();
 
       renderShell();
-      await screen.findByText("Applications content");
-      const navItem = screen.getByRole("button", { name: /getting started/i });
-
-      await user.click(navItem);
 
       expect(await screen.findByText("Set up toToggle in 6 steps")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /getting started/i })).toBeInTheDocument();
+    });
+
+    it("does not auto-open the wizard for a non-root role, even when not onboarded", async () => {
+      window.localStorage.removeItem("totoggle_v2_onboarded");
+      vi.stubGlobal("fetch", mockFetch({ id: "2", username: "alice", role: "admin", must_change_password: false }));
+
+      renderShell();
+
+      expect(await screen.findByText("Applications content")).toBeInTheDocument();
+      expect(screen.queryByText("Set up toToggle in 6 steps")).not.toBeInTheDocument();
+    });
+
+    it("does not reopen the wizard on its own once already onboarded", async () => {
+      vi.stubGlobal("fetch", mockFetch({ id: "1", username: "root", role: "root", must_change_password: false }));
+
+      renderShell();
+
+      expect(await screen.findByText("Applications content")).toBeInTheDocument();
+      expect(screen.queryByText("Set up toToggle in 6 steps")).not.toBeInTheDocument();
     });
 
     it("hides the nav item entirely for a non-root role", async () => {

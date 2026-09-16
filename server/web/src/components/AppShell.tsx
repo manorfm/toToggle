@@ -176,6 +176,17 @@ export function AppShell() {
   const authenticatedUserCanManageUsers =
     currentUser.status === "authenticated" && (currentUser.user.role === "root" || currentUser.user.role === "admin");
 
+  // Abre o wizard sozinho no primeiro login do root (gap real: antes disto, `onboardingOpen`
+  // só virava `true` clicando em "Getting started" — nada nunca chamava `setOnboardingOpen`
+  // automaticamente, então o tour nunca aparecia por conta própria, só sob demanda). Roda uma
+  // vez, assim que o perfil autenticado carrega; lê `isOnboarded()` direto (não o state
+  // `onboarded`, que só é reavaliado ao fechar o modal) para não reabrir por engano se este
+  // efeito rodar de novo.
+  useEffect(() => {
+    if (!authenticatedUserId || !authenticatedUserIsRoot) return;
+    if (!isOnboarded()) setOnboardingOpen(true);
+  }, [authenticatedUserId, authenticatedUserIsRoot]);
+
   useEffect(() => {
     if (!authenticatedUserId) return;
     let cancelled = false;
