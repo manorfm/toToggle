@@ -2225,6 +2225,10 @@ substituíram um badge estático fictício ("build: passing" hardcoded, nunca li
     rel="noopener">` com `Icon name="book"`, entre "Getting started" e o user-chip. Adicionado a
     `AppShell.tsx` (mais `rel="noreferrer"` por segurança, além do `noopener` confirmado — prática
     padrão pra link externo que o protótipo já tem implícita via `target="_blank"`).
+    **Correção posterior**: o path `toToggles` (com "s") citado acima é literalmente o que o
+    protótipo tinha — mas dava 404 de verdade (reportado pelo usuário ao clicar), porque o repo
+    real é `toToggle` (sem "s"). Corrigido em `AppShell.tsx` para `.../toToggle/index.html` — o
+    bug era do próprio protótipo, não da reconstrução aqui.
   - **`HelpTip` (novo componente)** — `components/HelpTip.tsx`, port 1:1 de
     `get_component_full("HelpTip")`: ícone `help` com um balão via `ReactDOM.createPortal` pro
     body, posicionado a partir do `getBoundingClientRect()` do próprio ícone, mostrado em

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchCommands } from "./commandPalette";
+import { buildToggleIndex, searchCommands } from "./commandPalette";
 import type { CommandPaletteData } from "./commandPalette";
 
 function data(overrides: Partial<CommandPaletteData> = {}): CommandPaletteData {
@@ -95,5 +95,47 @@ describe("searchCommands", () => {
     expect(hits.toggles).toEqual([]);
     expect(hits.teams).toEqual([]);
     expect(hits.people).toEqual([]);
+  });
+});
+
+describe("buildToggleIndex", () => {
+  // Bug real reportado pelo usuário: toggles nunca apareciam na busca geral. A implementação
+  // anterior usava Promise.all direto em AppShell — uma aplicação falhando derrubava o índice
+  // inteiro. Este teste prova a regressão: 2 apps, uma falha, a outra ainda contribui.
+  it("keeps the successful apps' toggles even when another app's fetch fails", async () => {
+    const apps = [
+      { id: "ok-app", name: "OK App" },
+      { id: "broken-app", name: "Broken App" },
+    ];
+    const fetchHierarchyLeaves = (appId: string) =>
+      appId === "ok-app" ? Promise.resolve(["payments.card"]) : Promise.reject(new Error("network error"));
+
+    const index = await buildToggleIndex(apps, fetchHierarchyLeaves);
+
+    expect(index).toEqual([{ appId: "ok-app", appName: "OK App", path: "payments.card" }]);
+  });
+
+  it("flattens toggles from every app that succeeds", async () => {
+    const apps = [
+      { id: "app-1", name: "App 1" },
+      { id: "app-2", name: "App 2" },
+    ];
+    const fetchHierarchyLeaves = (appId: string) =>
+      Promise.resolve(appId === "app-1" ? ["a.b"] : ["c.d", "c.e"]);
+
+    const index = await buildToggleIndex(apps, fetchHierarchyLeaves);
+
+    expect(index).toEqual([
+      { appId: "app-1", appName: "App 1", path: "a.b" },
+      { appId: "app-2", appName: "App 2", path: "c.d" },
+      { appId: "app-2", appName: "App 2", path: "c.e" },
+    ]);
+  });
+
+  it("returns an empty index (not a rejection) when every app fails", async () => {
+    const apps = [{ id: "app-1", name: "App 1" }];
+    const index = await buildToggleIndex(apps, () => Promise.reject(new Error("boom")));
+
+    expect(index).toEqual([]);
   });
 });

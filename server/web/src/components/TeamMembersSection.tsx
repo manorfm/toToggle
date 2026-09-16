@@ -11,7 +11,6 @@ import type { TeamApprover, TeamWithCounts } from "../types/team";
 
 interface TeamMembersSectionProps {
   team: TeamWithCounts;
-  onDelete?: (teamId: string) => void;
 }
 
 type State = { status: "loading" } | { status: "loaded"; members: TeamApprover[] } | { status: "error"; message: string };
@@ -27,18 +26,20 @@ function pluralize(count: number, singular: string, plural: string): string {
 // como componente irmão, com sua própria linha, era a causa raiz da divergência de layout
 // reportada pelo usuário (duas linhas de cabeçalho por time em vez de uma).
 //
-// Badge de aplicações (`team.application_count`) e o botão de apagar time NÃO existem no
-// protótipo confirmado — são capacidades reais desta implementação (GET /teams devolve
-// application_count; DELETE /teams/:id existe e funciona, já testado ao vivo em sessões
-// anteriores) mantidas como estavam, só reposicionadas pra caber na linha única confirmada em vez
-// de reaproveitar `team.user_count`/um card à parte.
+// Badge de aplicações e o botão de apagar time foram removidos por completo: uma passada anterior
+// os manteve como "capacidades reais desta implementação" (GET /teams devolve application_count;
+// DELETE /teams/:id existe e funciona) — mas um screenshot real do próprio protótipo (não só o
+// JSX) confirmou que a linha de cabeçalho real é SÓ nome + badge de membros + badge "no approver"
+// + "Add member", sem nenhum dos dois. `DELETE /teams/:id` continua existindo no backend, só sem
+// ponto de entrada nesta tela — mesma categoria de capacidade-sem-UI já aceita em outro lugar do
+// app (troca de role em `UserRow`, ver comentário em MemberRow.tsx).
 //
 // TeamsScreen inteiro é root-only (toda a API /teams exige RequireRoot()), então quem chega aqui
 // sempre pode gerenciar membros — sem prop canManage separada, mesma omissão já usada abaixo pro
 // texto do estado vazio ("Add the first member to this team." é o único branch alcançável, o
 // confirmado também tem "An admin can add members here." pra quem não é root, mas isso nunca
 // acontece nesta tela).
-export function TeamMembersSection({ team, onDelete }: TeamMembersSectionProps) {
+export function TeamMembersSection({ team }: TeamMembersSectionProps) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [adding, setAdding] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -88,13 +89,18 @@ export function TeamMembersSection({ team, onDelete }: TeamMembersSectionProps) 
   const memberCount = state.status === "loaded" ? state.members.length : null;
 
   return (
-    <div>
+    // data-testid estável pro e2e escopar o bloco inteiro de um time (nome + badges + Add member
+    // + lista de membros) — antes disso, os testes escopavam por um filtro frágil de texto+botão
+    // (ver histórico no git), que quebrou quando TeamRow/TeamMembersSection viraram um componente
+    // só (fix da divergência de layout de Teams & People): nome e botão "Add member" passaram a
+    // ficar na MESMA <div> da linha de cabeçalho, então esse filtro passou a resolver pra essa
+    // linha (mais interna) em vez do bloco inteiro, que é quem realmente contém a lista de membros.
+    <div data-testid="team-block">
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <div className="section-h" style={{ margin: 0 }}>
           {team.name}
         </div>
         {memberCount !== null && <span className="badge">{pluralize(memberCount, "member", "members")}</span>}
-        <span className="badge">{pluralize(team.application_count, "application", "applications")}</span>
         {state.status === "loaded" && approverCount === 0 && (
           <span
             className="badge"
@@ -107,11 +113,6 @@ export function TeamMembersSection({ team, onDelete }: TeamMembersSectionProps) 
         <button className="btn btn-soft btn-sm" onClick={() => setAdding(true)}>
           <Icon name="plus" size={14} /> Add member
         </button>
-        {onDelete && (
-          <button className="icon-btn" title="Delete team" aria-label="Delete team" onClick={() => onDelete(team.id)}>
-            <Icon name="trash" size={14} />
-          </button>
-        )}
       </div>
 
       {actionError && (

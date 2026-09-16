@@ -51,6 +51,35 @@ const TOGGLE_CAP = 8;
 const TEAM_CAP = 4;
 const PEOPLE_CAP = 4;
 
+// Bug real reportado pelo usuário: toggles nunca apareciam na busca geral (⌘K), mesmo com um
+// termo que claramente batia num path existente. Causa raiz: AppShell montava o índice de
+// toggles com `Promise.all` sobre `getToggleHierarchy(app.id)` de TODA aplicação — `Promise.all`
+// rejeita o conjunto INTEIRO assim que uma única promise rejeita, e o `.catch` do chamador
+// respondia a isso zerando o índice inteiro (`setToggleIndex([])`), cacheado daí em diante (só
+// recalculado numa próxima montagem do AppShell). Ou seja: bastava UMA aplicação falhar ao buscar
+// sua hierarquia (erro de rede transitório, uma aplicação sem toggles com alguma resposta
+// inesperada, etc.) pra apagar silenciosamente os toggles de TODAS as outras aplicações, pelo
+// resto da sessão. `buildToggleIndex` usa `Promise.allSettled` — cada aplicação contribui (ou não)
+// de forma independente; uma falha isolada nunca mais derruba o índice inteiro.
+export async function buildToggleIndex(
+  apps: CommandPaletteAppHit[],
+  fetchHierarchyLeaves: (appId: string) => Promise<string[]>
+): Promise<CommandPaletteToggleHit[]> {
+  const results = await Promise.allSettled(
+    apps.map((app) => fetchHierarchyLeaves(app.id).then((paths) => ({ app, paths })))
+  );
+
+  const hits: CommandPaletteToggleHit[] = [];
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    const { app, paths } = result.value;
+    for (const path of paths) {
+      hits.push({ appId: app.id, appName: app.name, path });
+    }
+  }
+  return hits;
+}
+
 export function searchCommands(query: string, data: CommandPaletteData): CommandPaletteHits {
   const q = query.trim();
 

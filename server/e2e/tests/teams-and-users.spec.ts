@@ -19,18 +19,28 @@ test("root creates a team, creates a user, and manages team membership/approver 
   await rootPage.getByRole("button", { name: "Create team" }).click();
   await expect(rootPage.getByText("E2E Second Team")).toBeVisible();
 
-  // TeamsScreen envolve cada time num <div> sem classe própria (TeamRow + TeamMembersSection
-  // como irmãos) — escopa pelo <div> mais interno que contém tanto o nome do time quanto o botão
-  // "Add member" daquele bloco (.last() pega o ancestral mais específico, não a página inteira).
-  // Reusado do começo ao fim: um time recém-criado, sem nenhum membro, já é candidato ao badge
-  // "no approver" (v2.6 §2.10, confirmado contra get_full_jsx("TeamsView") — approverCount é 0
-  // tanto com zero membros quanto com membros nenhum aprovador).
-  const newTeamSection = rootPage
-    .locator("div")
-    .filter({ hasText: "E2E Second Team" })
-    .filter({ has: rootPage.getByRole("button", { name: "Add member" }) })
-    .last();
+  // Escopa pelo bloco (data-testid="team-block", TeamMembersSection.tsx) do time recém-criado —
+  // um filtro de texto+botão foi tentado antes disso e quebrou (não uma vez, mas estruturalmente:
+  // qualquer ajuste de layout que mova nome/botão pra divs diferentes muda qual <div> o filtro
+  // resolve), quando o fix da divergência de layout de Teams & People uniu TeamRow+
+  // TeamMembersSection num só componente. Reusado do começo ao fim: um time recém-criado, sem
+  // nenhum membro, já é candidato ao badge "no approver" (v2.6 §2.10, confirmado contra
+  // get_full_jsx("TeamsView") — approverCount é 0 tanto com zero membros quanto com membros
+  // nenhum aprovador).
+  const newTeamSection = rootPage.getByTestId("team-block").filter({ hasText: "E2E Second Team" });
   await expect(newTeamSection.getByText(/no approver/i)).toBeVisible();
+
+  // Regressão real: `.compact` (a caixa com moldura ao redor de "No members yet", confirmada via
+  // design-graph get_component_spec(".compact")) tinha ficado inteiramente ausente do global.css
+  // — className="empty compact" caía só no `.empty` genérico, sem borda/fundo. Um teste de
+  // componente (jsdom) só prova que a className foi aplicada, nunca que a REGRA existe no CSS de
+  // verdade — só um browser real (Playwright) consegue pegar essa classe de bug via
+  // getComputedStyle. `borderStyle` só é "solid" se a regra `.compact` (border: 1px solid
+  // var(--border)) estiver realmente carregada e vencendo a cascata contra `.empty`.
+  const emptyState = newTeamSection.locator(".empty.compact");
+  await expect(emptyState.getByText("No members yet")).toBeVisible();
+  await expect(emptyState.getByText("Add the first member to this team.")).toBeVisible();
+  expect(await emptyState.evaluate((el) => getComputedStyle(el).borderStyle)).toBe("solid");
 
   // 2. Criar usuário — admin, aprovador, no time "E2E Team" (o time da fixture compartilhada,
   // não o recém-criado).

@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   addTeamMember,
   createTeam,
-  deleteTeam,
   listMyTeams,
   listTeamApprovers,
   listTeamOptions,
@@ -75,27 +74,6 @@ describe("createTeam", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(400, { success: false, error: "team name already exists" })));
 
     await expect(createTeam({ name: "Payments Squad" })).rejects.toMatchObject({ status: 400, message: "team name already exists" });
-  });
-});
-
-describe("deleteTeam", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("sends DELETE to /teams/:id", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { success: true, message: "Team deleted successfully" }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await deleteTeam("team1");
-
-    expect(fetchMock).toHaveBeenCalledWith("/api/teams/team1", expect.objectContaining({ method: "DELETE" }));
-  });
-
-  it("propagates ApiError when the caller isn't root", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(403, { success: false, error: "Forbidden" })));
-
-    await expect(deleteTeam("team1")).rejects.toMatchObject({ status: 403 });
   });
 });
 

@@ -129,37 +129,10 @@ describe("TeamsScreen", () => {
     expect(await screen.findByText("Data Platform")).toBeInTheDocument();
   });
 
-  it("deletes a team via the confirm modal and removes it from the list", async () => {
-    let deleted = false;
-    const fetchMock = vi.fn().mockImplementation((path: string, init?: RequestInit) => {
-      if (path === "/api/teams/1" && init?.method === "DELETE") {
-        deleted = true;
-        return Promise.resolve(jsonResponse(200, { success: true, message: "Team deleted successfully" }));
-      }
-      return Promise.resolve(
-        jsonResponse(200, {
-          success: true,
-          teams: deleted
-            ? []
-            : [{ id: "1", name: "Payments Squad", description: "", created_at: "", updated_at: "", user_count: 0, application_count: 0 }],
-        })
-      );
-    });
-    vi.stubGlobal("fetch", fetchMock);
-    const user = userEvent.setup();
-
-    renderScreen(root);
-    await screen.findByText("Payments Squad");
-
-    await user.click(screen.getByRole("button", { name: /delete team/i }));
-    await screen.findByText(/delete team/i, { selector: ".modal-title" });
-    await user.click(screen.getByRole("button", { name: /^delete$/i }));
-
-    await screen.findByText(/no teams yet/i);
-    expect(deleted).toBe(true);
-  });
-
-  it("does not show delete buttons for non-root users", async () => {
+  // Confirmado via screenshot real do protótipo: o cabeçalho de um time não tem botão de apagar
+  // (nem badge de aplicações) — DELETE /teams/:id continua existindo no backend, só sem ponto de
+  // entrada nesta tela (ver TeamMembersSection.tsx).
+  it("never shows a delete-team button, for any role", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -170,7 +143,7 @@ describe("TeamsScreen", () => {
       )
     );
 
-    renderScreen(admin);
+    renderScreen(root);
     await screen.findByText("Payments Squad");
 
     expect(screen.queryByRole("button", { name: /delete team/i })).not.toBeInTheDocument();

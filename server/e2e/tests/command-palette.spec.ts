@@ -44,6 +44,18 @@ test("root searches and navigates via the command palette across apps, toggles a
 
   await expect(page).toHaveURL(/\/teams$/);
 
+  // Grupo "People" nunca tinha cobertura e2e própria (só apps/toggles/teams acima) — fecha a
+  // lacuna. Busca pelo nome completo (não o username) pra provar que o match cobre os dois campos
+  // (lib/commandPalette.ts#searchCommands já testa isso a nível de unidade; aqui é a prova viva
+  // de que o dado real de `GET /users` chega no palette com `name` populado).
+  await page.goto("/");
+  await page.keyboard.press("Control+k");
+  await page.getByPlaceholder("Search applications, toggles, teams, people…").fill("E2E Admin");
+  await expect(page.locator(".cmdk-group", { hasText: "People" })).toBeVisible();
+  await page.getByRole("button", { name: /E2E Admin/ }).click();
+
+  await expect(page).toHaveURL(/\/users$/);
+
   await context.close();
 });
 

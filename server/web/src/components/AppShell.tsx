@@ -10,6 +10,7 @@ import { getToggleHierarchy } from "../api/toggles";
 import { listUsers } from "../api/users";
 import { logout } from "../api/profile";
 import { favoriteAppIds, favoriteToggleRefs } from "../lib/favorites";
+import { buildToggleIndex } from "../lib/commandPalette";
 import type { CommandPaletteData, CommandPaletteToggleHit } from "../lib/commandPalette";
 import { isOnboarded } from "../lib/onboarding";
 import { leafDottedPaths } from "../lib/toggleLeaves";
@@ -254,22 +255,18 @@ export function AppShell() {
   // paleta abre (não no mount do shell) e só uma vez por sessão (cache em `toggleIndex`,
   // guardado por `!== null`). `applications` já vem do fetch de badge acima; nenhuma aplicação
   // ainda carregada só adia a busca pro próximo open, não trava em `[]` permanentemente.
+  //
+  // Bug real reportado pelo usuário: toggles nunca apareciam na busca geral. Causa raiz — usava
+  // `Promise.all` aqui direto: uma única aplicação falhando (erro de rede transitório, etc.)
+  // rejeitava o conjunto INTEIRO, e o índice de toggles virava `[]` pra sempre nesta sessão,
+  // mesmo com dezenas de outras aplicações válidas. `buildToggleIndex` (lib/commandPalette.ts)
+  // usa `Promise.allSettled` — cada aplicação contribui de forma independente.
   useEffect(() => {
     if (!paletteOpen || toggleIndex !== null || applications.length === 0) return;
     let cancelled = false;
-    Promise.all(
-      applications.map((app) =>
-        getToggleHierarchy(app.id).then((tree) =>
-          leafDottedPaths(tree).map((path): CommandPaletteToggleHit => ({ appId: app.id, appName: app.name, path }))
-        )
-      )
-    )
-      .then((perApp) => {
-        if (!cancelled) setToggleIndex(perApp.flat());
-      })
-      .catch(() => {
-        if (!cancelled) setToggleIndex([]);
-      });
+    buildToggleIndex(applications, (appId) => getToggleHierarchy(appId).then(leafDottedPaths)).then((index) => {
+      if (!cancelled) setToggleIndex(index);
+    });
     return () => {
       cancelled = true;
     };
@@ -449,7 +446,7 @@ export function AppShell() {
           {/* v2.6.4 — confirmado em get_full_jsx("App"): link externo pra documentação, entre
               "Getting started" e o user-chip. "Light/Dark mode" continua deliberadamente fora
               (app só suporta tema escuro, ver nota em server/CLAUDE.md). */}
-          <a className="nav-item" href="https://manorfm.github.io/toToggles/index.html" target="_blank" rel="noopener noreferrer">
+          <a className="nav-item" href="https://manorfm.github.io/toToggle/index.html" target="_blank" rel="noopener noreferrer">
             <Icon name="book" size={17} /> Documentation
           </a>
           <button className="user-chip" onClick={() => setMenuOpen((open) => !open)}>

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TeamMembersSection } from "./TeamMembersSection";
@@ -24,25 +24,44 @@ describe("TeamMembersSection", () => {
     vi.unstubAllGlobals();
   });
 
-  // Confirmado contra get_full_jsx("TeamsView"): nome, badge de membros, "Add member" e a
-  // lista/estado vazio vivem no MESMO bloco — não em dois componentes/duas linhas separadas
-  // (essa divisão era a causa raiz da divergência de layout reportada).
-  it("shows the team name and application count in the same header as the member list", async () => {
+  // Confirmado contra get_full_jsx("TeamsView") e, depois, contra um screenshot real do
+  // protótipo: nome, badge de membros, "Add member" e a lista/estado vazio vivem no MESMO
+  // bloco — não em dois componentes/duas linhas separadas (essa divisão era a causa raiz da
+  // divergência de layout reportada). O screenshot também confirmou que NÃO existe badge de
+  // aplicações nem botão de apagar time nesse cabeçalho — os dois foram removidos.
+  it("shows the team name in the same header as the member list, with no application-count badge or delete button", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
 
     render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
 
     expect(screen.getByText("Payments Squad")).toBeInTheDocument();
-    expect(await screen.findByText("2 applications")).toBeInTheDocument();
     expect(await screen.findByText(/no members yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/application/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete team/i })).not.toBeInTheDocument();
   });
 
-  it("uses singular wording for a count of one application", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
+  // Trava o contrato que o e2e (teams-and-users.spec.ts) depende pra escopar o bloco de um time:
+  // um ÚNICO elemento `data-testid="team-block"` precisa conter tanto o cabeçalho (nome/"Add
+  // member") quanto a lista de membros — não dois containers irmãos disjuntos. Motivo real de
+  // existir: essa divisão em dois (TeamRow + TeamMembersSection) foi exatamente a causa raiz da
+  // divergência de layout corrigida nesta sessão, e quebrou silenciosamente o e2e (que escopava
+  // por um filtro de texto+botão frágil, sensível a em qual <div> cada pedaço acaba morando) — um
+  // teste de componente barato aqui pega a mesma regressão antes de precisar rodar o e2e inteiro.
+  it("keeps the header (name + Add member) and the member list inside the same team-block", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(200, { message: "ok", data: [{ team_id: "team1", user_id: "1", is_approver: false, username: "alice", role: "admin" }] })
+      )
+    );
 
-    render(<TeamMembersSection team={{ ...team, application_count: 1 }} />, { wrapper: ToastProvider });
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
+    await screen.findByText("alice");
 
-    expect(await screen.findByText("1 application")).toBeInTheDocument();
+    const block = screen.getByTestId("team-block");
+    expect(within(block).getByText("Payments Squad")).toBeInTheDocument();
+    expect(within(block).getByRole("button", { name: /add member/i })).toBeInTheDocument();
+    expect(within(block).getByText("alice")).toBeInTheDocument();
   });
 
   it("shows the member-count badge derived from the loaded member list, using singular wording for one", async () => {
@@ -56,28 +75,6 @@ describe("TeamMembersSection", () => {
     render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
 
     expect(await screen.findByText("1 member")).toBeInTheDocument();
-  });
-
-  it("calls onDelete with the team id when the delete button is clicked", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
-    const onDelete = vi.fn();
-    const user = userEvent.setup();
-
-    render(<TeamMembersSection team={team} onDelete={onDelete} />, { wrapper: ToastProvider });
-    await screen.findByText(/no members yet/i);
-
-    await user.click(screen.getByRole("button", { name: /delete team/i }));
-
-    expect(onDelete).toHaveBeenCalledWith("team1");
-  });
-
-  it("does not render a delete button when onDelete is not provided", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { message: "ok", data: [] })));
-
-    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
-    await screen.findByText(/no members yet/i);
-
-    expect(screen.queryByRole("button", { name: /delete team/i })).not.toBeInTheDocument();
   });
 
   // Confirmado contra get_full_jsx("TeamsView"): o estado vazio real é `.empty.compact` (ícone

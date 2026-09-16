@@ -539,6 +539,19 @@ input[type="checkbox"] {
   font-size: 13px;
   margin-top: 4px;
 }
+/* Variante compacta de .empty (usada junto, className="empty compact") — uma caixa com moldura
+   própria em vez do vazio de página inteira. Confirmado via design-graph (get_component_spec(".compact")),
+   reusada por ApprovalsView e TeamsView — só TeamsView (TeamMembersSection.tsx) consome de fato
+   hoje. Bug real corrigido: essa classe nunca tinha sido extraída pro CSS, então
+   `className="empty compact"` caía só no `.empty` genérico (padding 70px, sem borda/fundo),
+   perdendo a caixa com moldura que o protótipo mostra. Precisa vir DEPOIS de `.empty` no arquivo
+   — mesma especificidade (uma classe só), o padding daqui precisa vencer o de `.empty` na cascata. */
+.compact {
+  padding: 30px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
 
 /* --- Toasts (feedback transitório de mutações — ver components/ToastProvider.tsx) --- */
 .toast-wrap {
