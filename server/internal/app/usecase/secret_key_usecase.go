@@ -70,8 +70,8 @@ func (uc *SecretKeyUseCase) createSecretKey(name, applicationID, createdBy strin
 // {current, previous}, nunca uma pilha): a chave CURRENT existente vira PREVIOUS (continua
 // autenticando durante a janela de overlap), e qualquer PREVIOUS que já existisse antes disso é
 // revogada de vez — ela está prestes a ser empurrada pra fora da janela de overlap de qualquer
-// forma. Chaves ainda pendentes de aprovação (Active=false) e chaves já revogadas nunca
-// participam — não são "a chave ativa" de propósito nenhum aqui.
+// forma. Chaves ainda pendentes de aprovação (Active=false) nunca participam — não são "a chave
+// ativa" de propósito nenhum aqui.
 func (uc *SecretKeyUseCase) rotateExistingKeys(applicationID string) error {
 	keys, err := uc.secretKeyRepo.GetByApplicationID(applicationID)
 	if err != nil {
@@ -79,7 +79,7 @@ func (uc *SecretKeyUseCase) rotateExistingKeys(applicationID string) error {
 	}
 
 	for _, key := range keys {
-		if !key.Active || key.RevokedAt != nil {
+		if !key.Active {
 			continue
 		}
 		if key.IsCurrent {
@@ -96,19 +96,18 @@ func (uc *SecretKeyUseCase) rotateExistingKeys(applicationID string) error {
 	return nil
 }
 
-// RevokeSecretKey marca uma chave como revogada de vez (v2.6 §5.1) — ela para de autenticar
-// (ValidateSecretKey) e some da listagem (GetSecretKeysByApplicationID), mas a linha continua no
-// banco (histórico), diferente de DeleteSecretKey (remoção física, usada só pra limpar uma chave
-// PENDENTE que nunca chegou a ser aprovada — nesse caso ela nunca foi real, não há histórico a
-// preservar).
+// RevokeSecretKey revoga uma chave de vez (v2.6 §5.1) — exclusão física. Uma chave revogada nunca
+// volta a autenticar (ValidateSecretKey já rejeita um hash que não existe mais) e some da
+// listagem (GetSecretKeysByApplicationID) da mesma forma que sumiria se só estivesse marcada como
+// revogada. Não há tela de "chaves revogadas" no produto (GetAllSecretKeys nunca teve rota) e
+// AuditLog já grava o evento key_revoked com o texto necessário pra auditoria — manter a linha
+// física no banco depois disso não sustentava nenhuma capacidade real, só uma credencial hasheada
+// parada sem uso (achado numa análise de segurança/auditoria desta sessão). Diferente de
+// DeleteSecretKey, que serve só pra limpar uma chave PENDENTE que nunca chegou a ser aprovada
+// (nesse caso ela nunca foi real, não há evento de revogação a gravar) — os dois nomes continuam
+// separados porque documentam intenções de chamador diferentes, mesmo com o mesmo corpo hoje.
 func (uc *SecretKeyUseCase) RevokeSecretKey(id string) error {
-	key, err := uc.secretKeyRepo.GetByID(id)
-	if err != nil {
-		return err
-	}
-	now := time.Now()
-	key.RevokedAt = &now
-	return uc.secretKeyRepo.Update(key)
+	return uc.secretKeyRepo.Delete(id)
 }
 
 // ActivateAndRotateSecretKey ativa a secret key pendente identificada por newKeyID e coloca a
@@ -143,7 +142,7 @@ func (uc *SecretKeyUseCase) GetSecretKeysByApplicationID(applicationID string) (
 
 	active := make([]*entity.SecretKey, 0, len(keys))
 	for _, key := range keys {
-		if key.Active && key.RevokedAt == nil {
+		if key.Active {
 			active = append(active, key)
 		}
 	}
@@ -166,11 +165,12 @@ func (uc *SecretKeyUseCase) DeleteSecretKey(id string) error {
 }
 
 // ValidateSecretKey valida uma secret key fornecida. Uma chave pendente de aprovação
-// (Active == false) ou revogada (RevokedAt != nil) tem hash válido no banco mas não autentica
-// nada — mesmo erro de "não encontrada" nos três casos (pendente/revogada/inexistente), pra não
-// vazar pra quem apresenta a chave qual dessas situações é a real. Tanto a chave CURRENT quanto a
-// PREVIOUS (durante a janela de overlap, v2.6 §5.1) autenticam aqui — a distinção current/previous
-// só importa pra UI, nunca pra este endpoint.
+// (Active == false) tem hash válido no banco mas não autentica nada — mesmo erro de "não
+// encontrada" nos dois casos (pendente/inexistente, e agora também revogada — que desde a
+// mudança pra exclusão física já cai direto no primeiro `err != nil` acima, GetByHash não a
+// encontra mais), pra não vazar pra quem apresenta a chave qual dessas situações é a real. Tanto
+// a chave CURRENT quanto a PREVIOUS (durante a janela de overlap, v2.6 §5.1) autenticam aqui — a
+// distinção current/previous só importa pra UI, nunca pra este endpoint.
 func (uc *SecretKeyUseCase) ValidateSecretKey(secretKey string) (*entity.SecretKey, error) {
 	// Gerar hash da chave fornecida
 	hash := sha256.Sum256([]byte(secretKey))
@@ -181,7 +181,7 @@ func (uc *SecretKeyUseCase) ValidateSecretKey(secretKey string) (*entity.SecretK
 	if err != nil {
 		return nil, err
 	}
-	if !key.Active || key.RevokedAt != nil {
+	if !key.Active {
 		return nil, errors.New("secret key not found")
 	}
 

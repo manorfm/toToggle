@@ -53,6 +53,28 @@ type ApprovalRequest struct {
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 
+	// RequesterName/TeamName/ApplicationName: o nome de quem pediu, de que time e de que
+	// aplicação, gravados no momento da criação do pedido (ver
+	// ApprovalUseCase.createApprovalRequestUnchecked) — mesmo padrão já usado por
+	// audit_logs.actor_name (entity.AuditLog): o nome em si, não um termo técnico de como ele é
+	// preservado. Diferente de Requester/Team/Application abaixo (relacionamentos vivos,
+	// resolvidos por FK), estes são texto congelado, imune a User/Team/Application serem apagados
+	// fisicamente depois. Um ApprovalRequest aprovado/rejeitado nunca é apagado (fica pra sempre
+	// como histórico), então sem isso o nome vira "" pra sempre assim que a entidade original
+	// some — confirmado ao vivo numa investigação real desta sessão. json:"-" porque a API
+	// pública continua expondo RequesterName/TeamName/ApplicationName através de
+	// ApprovalRequestWithDetails (que declara os seus próprios campos de mesmo nome, sombreando
+	// estes por composição — Go resolve pro campo mais raso, sem ambiguidade), resolvidos com
+	// este valor como fonte preferida e o JOIN ao vivo só como fallback pra pedidos anteriores à
+	// migration que os introduziu (ver ApprovalRequestRepository). Ponteiro, não string: o
+	// repositório usa COALESCE(valor, join, '') pra decidir a fonte, e COALESCE só cai pro
+	// fallback quando a coluna é SQL NULL — um `string` normal gravaria "" (zero-value) em toda
+	// linha que não seta o valor explicitamente (ex.: testes de repositório que criam o request
+	// direto), o que NÃO é NULL e quebraria o fallback silenciosamente.
+	RequesterName   *string `json:"-" gorm:"column:requester_name;type:varchar(150)"`
+	TeamName        *string `json:"-" gorm:"column:team_name;type:varchar(100)"`
+	ApplicationName *string `json:"-" gorm:"column:application_name;type:varchar(255)"`
+
 	// Relacionamentos
 	Requester    *User        `json:"requester,omitempty" gorm:"foreignKey:RequestedBy"`
 	Team         *Team        `json:"team,omitempty" gorm:"foreignKey:TeamID"`

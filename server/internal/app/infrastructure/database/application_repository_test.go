@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"testing"
 
 	"github.com/manorfm/totoogle/internal/app/domain/entity"
@@ -293,5 +294,59 @@ func TestApplicationRepository_DeleteWithCascade(t *testing.T) {
 	}
 	if len(toggles) != 0 {
 		t.Errorf("Expected 0 toggles after cascade deletion, got %d", len(toggles))
+	}
+
+	// toggleRepo.GetByAppID already scopes out soft-deleted rows (entity.Toggle has
+	// gorm.DeletedAt), so the assertion above alone can't tell a real physical delete apart from
+	// an accidental soft-delete that just left an orphaned row behind — confirmed as a real bug
+	// in a previous investigation of this exact cascade (Delete() on a soft-deletable model
+	// without Unscoped() only sets deleted_at). Unscoped() here proves the row is genuinely gone.
+	var rawCount int64
+	if err := db.Unscoped().Model(&entity.Toggle{}).Where("app_id = ?", app.ID).Count(&rawCount).Error; err != nil {
+		t.Fatalf("failed to count toggle rows unscoped: %v", err)
+	}
+	if rawCount != 0 {
+		t.Errorf("expected the application's toggles to be physically removed, found %d row(s) still in the table (soft-deleted orphan?)", rawCount)
+	}
+}
+
+// Um ApprovalRequest já decidido (aprovado/rejeitado) nunca é apagado — é histórico permanente
+// (aba "History"/"Mine" de Approvals). Apagar a aplicação que ele referenciava não deveria apagar
+// essa decisão junto: achado real numa investigação desta sessão, o código anterior tinha uma
+// linha "Deleta approval requests relacionadas (opcional - para limpeza)" que fazia exatamente
+// isso — removida. O pedido agora fica órfão (application_id aponta pra uma aplicação que não
+// existe mais), mas continua existindo e legível.
+func TestApplicationRepository_Delete_DoesNotEraseApprovalHistory(t *testing.T) {
+	db := setupTestDB(t)
+	repo := NewApplicationRepository(db)
+	approvalRepo := NewApprovalRequestRepository(db)
+
+	app := entity.NewApplication("App With History")
+	if err := repo.Create(app); err != nil {
+		t.Fatalf("failed to create app: %v", err)
+	}
+
+	appID := app.ID
+	request, err := entity.NewApprovalRequest(entity.ApprovalActionApplicationDelete, "Delete application", "user-1", "team-1", &appID, nil, nil)
+	if err != nil {
+		t.Fatalf("failed to build approval request: %v", err)
+	}
+	if err := request.Approve("root-user"); err != nil {
+		t.Fatalf("failed to approve request: %v", err)
+	}
+	if err := approvalRepo.Create(context.Background(), request); err != nil {
+		t.Fatalf("failed to persist approval request: %v", err)
+	}
+
+	if err := repo.Delete(app.ID); err != nil {
+		t.Fatalf("failed to delete application: %v", err)
+	}
+
+	survived, err := approvalRepo.GetByID(context.Background(), request.ID)
+	if err != nil {
+		t.Fatalf("expected the already-decided approval request to survive the application's deletion, got: %v", err)
+	}
+	if survived.Status != entity.ApprovalStatusApproved {
+		t.Errorf("expected the surviving request to keep its decided status, got %q", survived.Status)
 	}
 }

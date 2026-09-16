@@ -66,8 +66,14 @@ func (r *ApplicationRepositoryImpl) Delete(id string) error {
 		return tx.Error
 	}
 
-	// Deleta todas as toggles da aplicação primeiro
-	err := tx.Where("app_id = ?", id).Delete(&entity.Toggle{}).Error
+	// Deleta todas as toggles da aplicação primeiro. Unscoped() é necessário porque
+	// entity.Toggle tem gorm.DeletedAt — sem isso, Delete() aqui vira soft-delete automático do
+	// GORM (só marca deleted_at), deixando os toggles órfãos pra sempre apontando pra um app_id
+	// que não existe mais (achado numa investigação real desta sessão: confirmado ao vivo que a
+	// linha sobrevivia com deleted_at setado). A aplicação em si está sendo apagada de vez, sem
+	// nenhuma tela de "restaurar aplicação" — não faz sentido os toggles dela sobreviverem como
+	// soft-delete quando o pai já não existe fisicamente.
+	err := tx.Unscoped().Where("app_id = ?", id).Delete(&entity.Toggle{}).Error
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -87,12 +93,11 @@ func (r *ApplicationRepositoryImpl) Delete(id string) error {
 		return err
 	}
 
-	// Deleta approval requests relacionadas (opcional - para limpeza)
-	err = tx.Where("application_id = ?", id).Delete(&entity.ApprovalRequest{}).Error
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+	// approval_requests desta aplicação NÃO são apagados aqui de propósito (antes eram, sob o
+	// comentário "opcional - para limpeza") — um ApprovalRequest já aprovado/rejeitado é um
+	// registro de decisão já tomada, não deveria poder ser apagado como efeito colateral de outra
+	// ação. Fica órfão (application_id aponta pra uma aplicação que não existe mais), mas
+	// ApplicationName (ver entity.ApprovalRequest) já preserva o nome pra sempre.
 
 	// Deleta a aplicação
 	err = tx.Where("id = ?", id).Delete(&entity.Application{}).Error

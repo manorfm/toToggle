@@ -39,10 +39,6 @@ type SecretKey struct {
 	// silenciosamente sobrescrita. O código sempre define IsCurrent explicitamente (createSecretKey
 	// sempre cria como true — é a nova chave "atual" por definição).
 	IsCurrent bool `json:"is_current" gorm:"not null"`
-	// RevokedAt marca revogação DEFINITIVA (v2.6 §5.1) — diferente de Active=false, que significa
-	// "ainda pendente de aprovação" (um estado transitório, nunca definitivo). Uma chave revogada
-	// nunca mais autentica (ValidateSecretKey) nem aparece em GetSecretKeysByApplicationID.
-	RevokedAt *time.Time `json:"-"`
 	// LastUsedAt (v2.6 §5.6) — atualizado a cada ValidateSecretKey bem sucedido; nil quando a
 	// chave nunca foi usada. Rastreamento real, não um mock — upgrade deliberado além do
 	// protótipo (que só mostra "(demo — not tracked)").

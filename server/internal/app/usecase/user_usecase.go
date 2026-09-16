@@ -125,6 +125,14 @@ func (uc *UserUseCase) DeleteUser(id string) error {
 		return errors.New("cannot delete root user")
 	}
 
+	// Fecha qualquer sessão ativa da conta antes de apagá-la — ValidateToken já rejeitaria uma
+	// sessão de um usuário que não existe mais (GetByID falha), então isso não era uma brecha de
+	// segurança, mas deixava a linha em `sessions` órfã até expirar sozinha (até 7 dias). Mesmo
+	// método já usado por um reset de senha feito por admin/root.
+	if err := uc.InvalidateSessions(id); err != nil {
+		return err
+	}
+
 	// Admins podem ser deletados normalmente
 	return uc.userRepo.Delete(id)
 }

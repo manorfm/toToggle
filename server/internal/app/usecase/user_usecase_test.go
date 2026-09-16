@@ -78,3 +78,47 @@ func TestUserUseCase_InvalidateSessions(t *testing.T) {
 		t.Error("expected the session to be gone")
 	}
 }
+
+// DeleteUser não invalidava sessões da conta apagada — não era uma brecha de segurança de fato
+// (ValidateToken já rejeita porque userRepo.GetByID falha pra um usuário que não existe mais),
+// mas deixava a linha em `sessions` órfã até expirar sozinha (até 7 dias). Achado incidental numa
+// investigação de exclusão física/auditoria desta sessão; corrigido reaproveitando
+// InvalidateSessions, mesmo método já usado por um reset de senha feito por admin/root.
+func TestUserUseCase_DeleteUser_InvalidatesExistingSessions(t *testing.T) {
+	mockRepo := NewMockUserRepository()
+	mockRepo.Users["user-1"] = &entity.User{ID: "user-1", Username: "alice", Role: entity.UserRoleUser}
+
+	sessionRepo := NewMockSessionRepository()
+	preExisting, _, err := entity.NewSession("user-1", entity.SessionPurposeAuth, time.Hour)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if err := sessionRepo.Create(preExisting); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	useCase := NewUserUseCase(mockRepo, sessionRepo)
+	if err := useCase.DeleteUser("user-1"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(sessionRepo.Sessions) != 0 {
+		t.Errorf("expected the deleted user's session to be invalidated, found %d remaining", len(sessionRepo.Sessions))
+	}
+	if _, exists := mockRepo.Users["user-1"]; exists {
+		t.Error("expected the user to be physically removed")
+	}
+}
+
+func TestUserUseCase_DeleteUser_CannotDeleteRoot(t *testing.T) {
+	mockRepo := NewMockUserRepository()
+	mockRepo.Users["root-1"] = &entity.User{ID: "root-1", Username: "root", Role: entity.UserRoleRoot}
+
+	useCase := NewUserUseCase(mockRepo, NewMockSessionRepository())
+	if err := useCase.DeleteUser("root-1"); err == nil {
+		t.Error("expected an error when trying to delete the root user")
+	}
+	if _, exists := mockRepo.Users["root-1"]; !exists {
+		t.Error("expected the root user to still exist")
+	}
+}

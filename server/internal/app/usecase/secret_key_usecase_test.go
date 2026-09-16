@@ -16,7 +16,7 @@ func newSecretKeyUseCaseWithMock() (*SecretKeyUseCase, *MockSecretKeyRepository)
 	return NewSecretKeyUseCase(repo), repo
 }
 
-func TestSecretKeyUseCase_CreateSecretKey_IsCurrentAndUnrevoked(t *testing.T) {
+func TestSecretKeyUseCase_CreateSecretKey_IsCurrent(t *testing.T) {
 	uc, _ := newSecretKeyUseCaseWithMock()
 
 	resp, err := uc.CreateSecretKey("API Access Key", "app1", "user1")
@@ -26,9 +26,6 @@ func TestSecretKeyUseCase_CreateSecretKey_IsCurrentAndUnrevoked(t *testing.T) {
 
 	if !resp.SecretKey.IsCurrent {
 		t.Error("expected a freshly created key to be IsCurrent")
-	}
-	if resp.SecretKey.RevokedAt != nil {
-		t.Error("expected a freshly created key to not be revoked")
 	}
 	if resp.SecretKey.LastUsedAt != nil {
 		t.Error("expected a freshly created key to have never been used")
@@ -133,6 +130,25 @@ func TestSecretKeyUseCase_RevokeSecretKey_StopsItFromAuthenticating(t *testing.T
 	}
 	if len(keys) != 0 {
 		t.Errorf("expected a revoked key to be excluded from the listing, got: %+v", keys)
+	}
+}
+
+// Revogar deixou de ser um soft-delete (RevokedAt) e virou exclusão física — não há tela de
+// "chaves revogadas" no produto e o evento key_revoked em audit_logs já preserva o histórico
+// necessário, então manter a linha física não sustentava nenhuma capacidade real.
+func TestSecretKeyUseCase_RevokeSecretKey_RemovesTheRowPhysically(t *testing.T) {
+	uc, _ := newSecretKeyUseCaseWithMock()
+	created, err := uc.CreateSecretKey("API Access Key", "app1", "user1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if err := uc.RevokeSecretKey(created.SecretKey.ID); err != nil {
+		t.Fatalf("unexpected error revoking: %v", err)
+	}
+
+	if _, err := uc.GetSecretKeyByID(created.SecretKey.ID); err == nil {
+		t.Error("expected the revoked key's row to be gone, not just marked revoked")
 	}
 }
 

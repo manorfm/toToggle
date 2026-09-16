@@ -190,7 +190,7 @@ func (uc *ApprovalUseCase) createApprovalRequestUnchecked(ctx context.Context, a
 	}
 
 	// Validar se o team existe
-	_, err = uc.teamRepo.GetByID(teamID)
+	team, err := uc.teamRepo.GetByID(teamID)
 	if err != nil {
 		return nil, fmt.Errorf("team not found: %w", err)
 	}
@@ -206,8 +206,9 @@ func (uc *ApprovalUseCase) createApprovalRequestUnchecked(ctx context.Context, a
 	}
 
 	// Validar se application existe (se fornecido)
+	var application *entity.Application
 	if applicationID != nil {
-		_, err = uc.applicationRepo.GetByID(*applicationID)
+		application, err = uc.applicationRepo.GetByID(*applicationID)
 		if err != nil {
 			return nil, fmt.Errorf("application not found: %w", err)
 		}
@@ -252,6 +253,15 @@ func (uc *ApprovalUseCase) createApprovalRequestUnchecked(ctx context.Context, a
 		return nil, err
 	}
 	request.PlainSecretKey = plainSecretKey
+
+	// Congela os nomes agora, enquanto requester/team/application ainda existem de verdade — ver
+	// o comentário do campo em entity.ApprovalRequest. requester.Username (não .Name) pra bater
+	// com o que o JOIN de fallback do repositório expõe como RequesterName.
+	request.RequesterName = &requester.Username
+	request.TeamName = &team.Name
+	if application != nil {
+		request.ApplicationName = &application.Name
+	}
 
 	// Salvar no banco
 	if err := uc.approvalRequestRepo.Create(ctx, request); err != nil {

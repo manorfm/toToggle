@@ -603,12 +603,11 @@ func TestApprovalWorkflow_SecretKeyCreate_ApprovedAndExecuted_ActivatesKeyAndRot
 	if rotatedOldKey.IsCurrent {
 		t.Error("expected the old key to no longer be current after rotation")
 	}
-	if rotatedOldKey.RevokedAt != nil {
-		t.Error("expected the old key to still be valid (not revoked) during the overlap window")
-	}
+	// Revogar virou exclusão física — uma chave que sobreviveu no banco (como esta, no meio da
+	// janela de overlap) é, por definição, não-revogada. Não há mais um campo RevokedAt a checar.
 
 	var newKeys []entity.SecretKey
-	if err := db.Where("application_id = ? AND revoked_at IS NULL", "app-1").Find(&newKeys).Error; err != nil {
+	if err := db.Where("application_id = ?", "app-1").Find(&newKeys).Error; err != nil {
 		t.Fatalf("failed to query keys after execute: %v", err)
 	}
 	if len(newKeys) != 2 {

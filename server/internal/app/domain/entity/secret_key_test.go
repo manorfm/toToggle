@@ -25,9 +25,6 @@ func TestNewSecretKey(t *testing.T) {
 	if !sk.IsCurrent {
 		t.Error("expected a freshly constructed key to be IsCurrent")
 	}
-	if sk.RevokedAt != nil {
-		t.Error("expected a freshly constructed key to not be revoked")
-	}
 	if sk.LastUsedAt != nil {
 		t.Error("expected a freshly constructed key to have never been used")
 	}

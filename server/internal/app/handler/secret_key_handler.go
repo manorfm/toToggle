@@ -381,10 +381,11 @@ func (h *SecretKeyHandler) GetSecretKeys(c *gin.Context) {
 	})
 }
 
-// DeleteSecretKey revoga uma secret key (current ou previous — v2.6 §5.1) — o registro continua
-// no banco (histórico), só passa a não autenticar mais nada e sumir da listagem. O caller decide
-// QUAL chave revogar passando o ID certo (o de "current" ou o de "previous", ambos vêm de
-// GET .../secret-keys); não há distinção de rota entre os dois casos.
+// DeleteSecretKey revoga uma secret key (current ou previous — v2.6 §5.1) — exclusão física; o
+// evento key_revoked gravado logo abaixo é quem preserva o histórico, não a linha em si (que não
+// sustentava nenhuma tela real). O caller decide QUAL chave revogar passando o ID certo (o de
+// "current" ou o de "previous", ambos vêm de GET .../secret-keys); não há distinção de rota entre
+// os dois casos.
 // DELETE /api/secret-keys/{secret_key_id}
 func (h *SecretKeyHandler) DeleteSecretKey(c *gin.Context) {
 	secretKeyID := c.Param("id")

@@ -487,3 +487,42 @@ func TestApprovalRequestRepository_GetRequestStats(t *testing.T) {
 		assert.GreaterOrEqual(t, stats[entity.ApprovalStatusPending], 2)
 	})
 }
+
+// Prova central da correção desta sessão: RequesterName/TeamName/ApplicationName vinham de um
+// LEFT JOIN ao vivo contra users/teams/applications — apagar fisicamente qualquer uma dessas
+// entidades depois fazia o nome correspondente virar "" pra sempre num ApprovalRequest já
+// decidido (aprovado), que nunca é apagado (fica pra sempre como histórico). Confirmado ao vivo
+// numa investigação real desta sessão antes da correção. RequesterName/TeamName/ApplicationName
+// em entity.ApprovalRequest (gravados na criação, ver
+// ApprovalUseCase.createApprovalRequestUnchecked) existem exatamente pra isso: o repositório
+// prefere esse valor congelado e só cai pro JOIN ao vivo como fallback.
+func TestApprovalRequestRepository_GetWithDetails_NamesSurviveEntityBeingDeleted(t *testing.T) {
+	db := setupApprovalRequestTestDB(t)
+	userID, teamID, appID := createTestDataForApprovalRequest(t, db)
+	repo := NewApprovalRequestRepository(db)
+
+	request, err := entity.NewApprovalRequest(entity.ApprovalActionToggleCreate, "Create toggle", userID, teamID, &appID, nil, nil)
+	require.NoError(t, err)
+	// Mesma atribuição que ApprovalUseCase.createApprovalRequestUnchecked faz na criação real —
+	// este teste é de repositório, então simula à mão em vez de acionar todo o usecase.
+	requesterName := "testuser"
+	teamName := "Test Team"
+	appName := "Test App"
+	request.RequesterName = &requesterName
+	request.TeamName = &teamName
+	request.ApplicationName = &appName
+	require.NoError(t, request.Approve("approver-1"))
+	require.NoError(t, repo.Create(context.Background(), request))
+
+	// Apaga fisicamente as três entidades referenciadas — mesma operação que
+	// UserRepository/TeamRepository/ApplicationRepository.Delete fazem hoje.
+	require.NoError(t, db.Delete(&entity.User{}, "id = ?", userID).Error)
+	require.NoError(t, db.Delete(&entity.Team{}, "id = ?", teamID).Error)
+	require.NoError(t, db.Delete(&entity.Application{}, "id = ?", appID).Error)
+
+	result, err := repo.GetWithDetails(context.Background(), request.ID)
+	require.NoError(t, err)
+	assert.Equal(t, requesterName, result.RequesterName, "requester name should survive the user being deleted")
+	assert.Equal(t, teamName, result.TeamName, "team name should survive the team being deleted")
+	assert.Equal(t, appName, result.ApplicationName, "application name should survive the application being deleted")
+}
