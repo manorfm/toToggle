@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AddMemberModal } from "./AddMemberModal";
+import { ConfirmModal } from "./ConfirmModal";
 import { Icon } from "./Icon";
 import { MemberRow } from "./MemberRow";
 import { TempPasswordModal } from "./TempPasswordModal";
@@ -45,6 +46,7 @@ export function TeamMembersSection({ team }: TeamMembersSectionProps) {
   const [creatingUser, setCreatingUser] = useState(false);
   const [tempPassword, setTempPassword] = useState<{ username: string; password: string } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<{ userId: string; username: string } | null>(null);
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -59,7 +61,14 @@ export function TeamMembersSection({ team }: TeamMembersSectionProps) {
     load();
   }, [load]);
 
+  // Removing a member went straight to the API before, no confirmation — the only destructive
+  // button in the app without one (delete toggle/application/user all gate on ConfirmModal).
+  // design-graph's App screen truncates before reaching the modal-switch block that would show
+  // the exact copy, but the prop is literally named `onRemoveMember={requestRemoveMember}` in the
+  // decoded App JSX (same "request*" naming as `requestPasswordReset`, which does open a modal) —
+  // wired through the same shared ConfirmModal every other delete flow already uses here.
   async function handleRemove(userId: string) {
+    setRemoving(null);
     try {
       await removeTeamMember(team.id, userId);
       load();
@@ -135,7 +144,7 @@ export function TeamMembersSection({ team }: TeamMembersSectionProps) {
           <MemberRow
             key={member.user_id}
             member={member}
-            onRemove={() => handleRemove(member.user_id)}
+            onRemove={() => setRemoving({ userId: member.user_id, username: member.username })}
             onToggleApprover={() => handleToggleApprover(member.user_id, !member.is_approver)}
           />
         ))}
@@ -182,6 +191,17 @@ export function TeamMembersSection({ team }: TeamMembersSectionProps) {
             setTempPassword(null);
             toast("Member added");
           }}
+        />
+      )}
+
+      {removing && (
+        <ConfirmModal
+          title="Remove member"
+          sub={`This will remove "${removing.username}" from ${team.name}.`}
+          danger
+          confirmLabel="Remove"
+          onClose={() => setRemoving(null)}
+          onConfirm={() => handleRemove(removing.userId)}
         />
       )}
     </div>

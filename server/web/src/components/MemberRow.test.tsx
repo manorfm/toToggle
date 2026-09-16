@@ -21,7 +21,7 @@ describe("MemberRow", () => {
     const user = userEvent.setup();
     render(<MemberRow member={admin} onRemove={onRemove} />);
 
-    await user.click(screen.getByRole("button", { name: /remove member/i }));
+    await user.click(screen.getByRole("button", { name: /remove from team/i }));
 
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
@@ -29,7 +29,7 @@ describe("MemberRow", () => {
   it("does not render a remove button when onRemove is not provided", () => {
     render(<MemberRow member={admin} />);
 
-    expect(screen.queryByRole("button", { name: /remove member/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /remove from team/i })).not.toBeInTheDocument();
   });
 
   it("shows an 'Approver' badge when the member is already an approver", () => {

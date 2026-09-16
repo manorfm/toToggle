@@ -57,7 +57,7 @@ export function MemberRow({ member, onRemove, onToggleApprover }: MemberRowProps
       )}
 
       {onRemove && (
-        <button className="icon-btn" title="Remove member" aria-label="Remove member" onClick={onRemove}>
+        <button className="icon-btn" title="Remove from team" aria-label="Remove from team" onClick={onRemove}>
           <Icon name="trash" size={15} />
         </button>
       )}

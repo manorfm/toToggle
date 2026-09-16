@@ -224,9 +224,30 @@ describe("TeamMembersSection", () => {
     render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
     await screen.findByText("alice");
 
-    await user.click(screen.getByRole("button", { name: /remove member/i }));
+    await user.click(screen.getByRole("button", { name: /remove from team/i }));
+    expect(await screen.findByText(/this will remove "alice"/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^remove$/i }));
 
     expect(await screen.findByText(/no members yet/i)).toBeInTheDocument();
+  });
+
+  it("does not remove the member if the confirmation is dismissed", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(200, { message: "ok", data: [{ team_id: "team1", user_id: "1", is_approver: false, username: "alice", role: "admin" }] })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<TeamMembersSection team={team} />, { wrapper: ToastProvider });
+    await screen.findByText("alice");
+
+    await user.click(screen.getByRole("button", { name: /remove from team/i }));
+    await screen.findByText(/this will remove "alice"/i);
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+
+    expect(screen.queryByText(/this will remove "alice"/i)).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ method: "DELETE" }));
+    expect(screen.getByText("alice")).toBeInTheDocument();
   });
 
   it("toggles a member's approver status", async () => {
