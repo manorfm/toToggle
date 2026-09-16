@@ -222,20 +222,11 @@ func Init(router *gin.Engine) {
 	})
 
 	// Rota para página de login (novo frontend React, em server/web — build em static/app)
-	router.GET("/login", func(c *gin.Context) {
-		c.File("static/app/index.html")
-	})
+	router.GET("/login", handler.ServeSPAShell)
 
 	// Rota para página de troca de senha (com validação especial)
-	// TODO(frontend): ainda serve a casca do app novo (server/web) sem tela própria —
-	// falta migrar do protótipo. Ver server/web/src/screens.
-	router.GET("/change-password", handler.ValidatePasswordChangeAccess(), func(c *gin.Context) {
-		c.File("static/app/index.html")
-	})
+	router.GET("/change-password", handler.ValidatePasswordChangeAccess(), handler.ServeSPAShell)
 
 	// Rota raiz serve o frontend (protegida)
-	// TODO(frontend): idem — dashboard ainda não foi migrado do protótipo.
-	router.GET("/", handler.ValidateToken(), func(c *gin.Context) {
-		c.File("static/app/index.html")
-	})
+	router.GET("/", handler.ValidateToken(), handler.ServeSPAShell)
 }

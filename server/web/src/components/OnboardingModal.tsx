@@ -187,7 +187,7 @@ export function OnboardingModal({ existingTeams, existingApps, existingUsernames
             <div className="ob-head-mark">
               <Icon name="toggle" size={15} />
             </div>
-            to<b>Toggle</b>
+            <span>to<b>Toggle</b></span>
           </div>
           {step > 0 && step < 6 && <ObProgress step={step} />}
           {step === 6 && (

@@ -26,11 +26,23 @@ func ServeStatic(c *gin.Context) {
 	}
 	// Se a rota não for para uma API, serve a casca do frontend (React, server/web)
 	if !isAPIRoute(c.Request.URL.Path) {
-		c.File("static/app/index.html")
+		ServeSPAShell(c)
 		return
 	}
 	// Para rotas de API, continua com o handler normal
 	c.Next()
+}
+
+// ServeSPAShell serve static/app/index.html com Cache-Control: no-store. O build do
+// frontend (vite) usa nome de arquivo com hash de conteúdo pros assets e apaga os antigos
+// a cada build (emptyOutDir) — sem esse header, um index.html em cache no navegador de uma
+// visita anterior continua referenciando um JS/CSS com hash antigo, que já não existe mais
+// em disco: 404 no bundle e tela em branco. Os assets em si (/static/app/assets/*) não
+// precisam disso — o hash no nome já garante que uma URL só muda quando o conteúdo muda,
+// então cachear eles agressivamente é seguro.
+func ServeSPAShell(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	c.File("static/app/index.html")
 }
 
 // isAPIRoute verifica se a rota é uma rota de API. Toda a API (sessão ou secret key)
