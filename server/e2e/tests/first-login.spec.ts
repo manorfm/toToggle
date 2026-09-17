@@ -47,7 +47,12 @@ test("fresh boot: root logs in with the generated password, is forced to change 
     await page.getByRole("button", { name: /^entrar$/i }).click();
 
     await expect(page).toHaveURL(`${server.baseURL}/`);
-    await expect(page.getByText("toToggle")).toBeVisible();
+    // Root de verdade no primeiro login: sem `totoggle_v2_onboarded` no localStorage, o
+    // onboarding wizard abre sozinho por cima da tela (AppShell.tsx) — e ele também tem
+    // "toToggle" no próprio cabeçalho, então `getByText("toToggle")` sem escopo bate em mais de
+    // um elemento (strict-mode violation). Escopado ao `<aside>` (role "complementary") prova a
+    // mesma coisa (shell autenticado renderizou de verdade) independente do wizard estar aberto.
+    await expect(page.getByRole("complementary").getByText("toToggle")).toBeVisible();
 
     // 5. Confirma que a sessão realmente vale pra chamadas de API subsequentes, não só pro
     //    redirecionamento inicial.

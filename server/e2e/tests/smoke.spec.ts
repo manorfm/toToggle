@@ -20,5 +20,12 @@ test("app boots and serves a real login that authenticates root", async ({ page 
   await page.getByRole("button", { name: /entrar/i }).click();
 
   await expect(page).toHaveURL("/");
-  await expect(page.getByText("toToggle")).toBeVisible();
+  // Um root de verdade no primeiro login nunca tem `totoggle_v2_onboarded` no localStorage (este
+  // teste faz login pelo formulário de verdade, não reusa um storageState já seedado como o
+  // resto da suíte — ver global-setup.ts) — o onboarding wizard abre sozinho por cima da tela, e
+  // seu próprio cabeçalho também tem o texto "toToggle". `getByText("toToggle")` sem escopo bate
+  // nos dois lugares (sidebar + wizard) e vira strict-mode violation; escopado ao `<aside>`
+  // (role "complementary") prova a mesma coisa (o shell autenticado renderizou de verdade) sem
+  // depender de o wizard estar aberto ou fechado.
+  await expect(page.getByRole("complementary").getByText("toToggle")).toBeVisible();
 });

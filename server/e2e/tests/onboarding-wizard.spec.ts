@@ -7,11 +7,19 @@ import { ROOT_STATE } from "../fixtures";
 // summary screen claims so.
 test("root completes the onboarding wizard and every step's resource is created for real", async ({ browser }) => {
   const context = await browser.newContext({ storageState: ROOT_STATE });
+  // ROOT_STATE agora nasce com `totoggle_v2_onboarded` já seedado (global-setup.ts — evita que o
+  // wizard abra sozinho por cima de toda outra spec da suíte, ver AppShell.tsx). Este teste é
+  // justamente sobre o estado "ainda não onboarded" (nav item deve dizer "Getting started", não
+  // "Review setup"), então remove o flag explicitamente pra esta sessão antes de qualquer
+  // navegação, independente do que o fixture global seeda.
+  await context.addInitScript(() => window.localStorage.removeItem("totoggle_v2_onboarded"));
   const page = await context.newPage();
 
   await page.goto("/");
-  await page.getByRole("button", { name: /getting started/i }).click();
-
+  // AppShell.tsx auto-abre o wizard sozinho pra qualquer root ainda não onboarded (mesmo
+  // useEffect que motivou seedar o flag globalmente, ver acima) — não precisa clicar em
+  // "Getting started" pra abrir, e clicar nele agora falharia mesmo (o próprio `.ob-scrim` já
+  // aberto cobre a tela e intercepta o clique).
   await expect(page.getByText("Set up toToggle in 6 steps")).toBeVisible();
   await page.getByRole("button", { name: /start setup/i }).click();
 

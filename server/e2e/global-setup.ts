@@ -1,5 +1,5 @@
 import { request } from "@playwright/test";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ADMIN_STATE, ROOT_STATE, writeFixtures } from "./fixtures";
 import { E2E_BASE_URL, E2E_DB_DIR } from "./playwright.config";
@@ -10,6 +10,25 @@ const ROOT_NEW_PASSWORD = "e2eRootPass1";
 const ADMIN_USERNAME = "e2e-admin";
 const ADMIN_NEW_PASSWORD = "e2eAdminPass1";
 const TOGGLE_PATH = "feature.leaf";
+
+// AppShell.tsx auto-abre o onboarding wizard pra qualquer sessão de root cujo localStorage não
+// tenha `totoggle_v2_onboarded` (lib/onboarding.ts#isOnboarded) — comportamento correto pra um
+// root de verdade no primeiro login. Mas `ctx.storageState()` aqui vem de um APIRequestContext
+// (login só por HTTP, sem página/browser nenhum) — esse formato nunca tem `origins`
+// (localStorage é por-página, uma API context não tem página), então TODO spec que reusa
+// ROOT_STATE via `browser.newContext({ storageState: ROOT_STATE })` começava com esse flag
+// ausente e caía no wizard auto-aberto por acidente, bloqueando cliques (`.ob-scrim` intercepta
+// pointer events) em quase toda spec do repositório. Seedando o flag aqui, a sessão salva já
+// nasce "onboarded" — `onboarding-wizard.spec.ts` continua testando o fluxo de verdade porque
+// abre o wizard sozinho clicando em "Getting started", não dependendo deste auto-open.
+function seedOnboardedFlag(path: string): void {
+  const state = JSON.parse(readFileSync(path, "utf-8"));
+  state.origins = [
+    ...(state.origins ?? []).filter((o: { origin: string }) => o.origin !== E2E_BASE_URL),
+    { origin: E2E_BASE_URL, localStorage: [{ name: "totoggle_v2_onboarded", value: "1" }] },
+  ];
+  writeFileSync(path, JSON.stringify(state, null, 2));
+}
 
 async function waitForServerReady(): Promise<void> {
   const ctx = await request.newContext({ baseURL: E2E_BASE_URL });
@@ -71,6 +90,7 @@ export default async function globalSetup(): Promise<void> {
     });
     if (!rootLogin.ok()) throw new Error(`root re-login failed: ${rootLogin.status()} ${await rootLogin.text()}`);
     await ctx.storageState({ path: ROOT_STATE });
+    seedOnboardedFlag(ROOT_STATE);
 
     // 2. Fixtures: time, aplicação, toggle (criado desabilitado — a jornada de e2e liga ele),
     //    e um usuário admin escopado ao time. Tudo criado com o workflow de aprovação ainda
@@ -122,6 +142,9 @@ export default async function globalSetup(): Promise<void> {
       });
       if (!adminLogin.ok()) throw new Error(`admin re-login failed: ${adminLogin.status()} ${await adminLogin.text()}`);
       await adminCtx.storageState({ path: ADMIN_STATE });
+      // Admin nunca vê o wizard (gate é root-only, ver AppShell.tsx) — seedado aqui só por
+      // simetria/segurança, caso esse gate mude no futuro.
+      seedOnboardedFlag(ADMIN_STATE);
     } finally {
       await adminCtx.dispose();
     }
