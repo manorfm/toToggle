@@ -53,7 +53,6 @@ type LoadState =
       leaves: ToggleLeaf[];
       childrenCountById: Map<string, number>;
       stats: { total: number; on: number };
-      archived: ArchivedToggle[];
     }
   | { status: "loading" }
   | { status: "error"; message: string };
@@ -118,15 +117,8 @@ export function ApplicationDetailScreen() {
   const canEdit = user.role === "root" || user.role === "admin";
 
   const load = useCallback(() => {
-    // GET .../toggles/archived exige role admin (docs/rest-flow.md §7) — só busca quando o
-    // usuário pode editar, pra não bater um 403 esperado pra quem só tem leitura (`user`).
-    Promise.all([
-      getApplication(applicationId),
-      getToggleHierarchy(applicationId),
-      getTogglesFlat(applicationId),
-      canEdit ? getArchivedToggles(applicationId) : Promise.resolve([]),
-    ])
-      .then(([application, hierarchy, flat, archived]) => {
+    Promise.all([getApplication(applicationId), getToggleHierarchy(applicationId), getTogglesFlat(applicationId)])
+      .then(([application, hierarchy, flat]) => {
         setState({
           status: "loaded",
           applicationName: application.name,
@@ -134,18 +126,35 @@ export function ApplicationDetailScreen() {
           leaves: flattenToLeaves(hierarchy, flat),
           childrenCountById: buildChildrenCountMap(hierarchy),
           stats: countToggleTree(hierarchy),
-          archived,
         });
       })
       .catch((err) => {
         const message = err instanceof ApiError ? err.message : "Não foi possível carregar a aplicação.";
         setState({ status: "error", message });
       });
-  }, [applicationId, canEdit]);
+  }, [applicationId]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // "Archived (N)" só é usado dentro da própria aba Toggles (botão no header + ArchivedModal) —
+  // GET .../toggles/archived não precisa ser buscado se o usuário nunca visita essa aba (ex.:
+  // chega direto em ?tab=keys/activity). Buscado uma vez na primeira visita à aba Toggles
+  // (`archivedLoaded` evita refetch a cada troca de aba de volta) e refeito explicitamente após
+  // qualquer mutação que muda o conjunto arquivado (delete/restore) — ver `loadArchived()` abaixo.
+  const [archived, setArchived] = useState<ArchivedToggle[]>([]);
+  const [archivedLoaded, setArchivedLoaded] = useState(false);
+  const loadArchived = useCallback(() => {
+    if (!canEdit) return;
+    getArchivedToggles(applicationId).then((items) => {
+      setArchived(items);
+      setArchivedLoaded(true);
+    });
+  }, [applicationId, canEdit]);
+  useEffect(() => {
+    if (tab === "toggles" && !archivedLoaded && canEdit) loadArchived();
+  }, [tab, archivedLoaded, canEdit, loadArchived]);
 
   // Confirmado no protótipo real: o breadcrumb do topbar ganha um 3º nível com o nome da
   // aplicação aberta ("Applications / {app.name} / Toggles" ou ".../Service key"), e a sidebar
@@ -205,6 +214,7 @@ export function ApplicationDetailScreen() {
     try {
       await restoreToggle(applicationId, toggleId);
       load();
+      loadArchived();
     } catch {
       toast("Could not undo — try again");
     }
@@ -214,6 +224,7 @@ export function ApplicationDetailScreen() {
     try {
       await restoreToggle(applicationId, toggleId);
       load();
+      loadArchived();
       toast("Toggle restored");
     } catch {
       toast("Could not restore — try again");
@@ -233,6 +244,7 @@ export function ApplicationDetailScreen() {
         } else {
           setPendingNotice(null);
           load();
+          loadArchived();
           toast("Toggle deleted", { label: "Undo", onAction: () => undoDeleteToggle(toggleId) });
         }
         setDeletingToggle(null);
@@ -348,6 +360,15 @@ export function ApplicationDetailScreen() {
   const [activityCategory, setActivityCategory] = useState<CategoryFilter>("");
   const [activityRange, setActivityRange] = useState<"all" | AuditRange>("all");
   const [activityEntries, setActivityEntries] = useState<AuditLogEntry[]>([]);
+  // GET .../audit não é usado por nada fora desta aba (ao contrário de hierarchy/flat e
+  // secret-keys, que alimentam contador/indicador da sub-nav mesmo noutra aba) — só monta
+  // `AuditFeed` (que busca no próprio mount) depois da primeira visita real à aba Activity, pra
+  // não gastar essa chamada em toda sessão que nunca abre esta aba. Fica montado depois disso
+  // (nunca desmontado de novo) pra não repetir a busca a cada troca de aba.
+  const [activityVisited, setActivityVisited] = useState(tab === "activity");
+  useEffect(() => {
+    if (tab === "activity") setActivityVisited(true);
+  }, [tab]);
   const fetchActivityPage = useCallback(
     (cursor?: string) =>
       listApplicationAudit(applicationId, {
@@ -395,9 +416,9 @@ export function ApplicationDetailScreen() {
                   </div>
                   <div style={{ fontSize: 11, color: "var(--ink-4)", textTransform: "uppercase", letterSpacing: "0.05em" }}>active</div>
                 </div>
-                {canEdit && state.archived.length > 0 && (
+                {canEdit && archived.length > 0 && (
                   <button className="btn btn-soft btn-sm" onClick={() => setArchivedOpen(true)}>
-                    <Icon name="history" size={14} /> Archived ({state.archived.length})
+                    <Icon name="history" size={14} /> Archived ({archived.length})
                   </button>
                 )}
                 {canEdit && (
@@ -467,18 +488,22 @@ export function ApplicationDetailScreen() {
 
       {state.status === "loaded" && (
         <div hidden={tab !== "activity"}>
-          <AuditChips tabs={CATEGORY_TABS} active={activityCategory} onPick={setActivityCategory} />
-          <AuditToolbar
-            range={activityRange}
-            onRangeChange={setActivityRange}
-            exportDisabled={activityEntries.length === 0}
-            onExport={() => downloadCSV(activityEntries, `totoggle-${state.applicationName}-activity.csv`)}
-          />
-          <AuditFeed
-            fetchPage={fetchActivityPage}
-            emptyDescription="No changes recorded for this application yet."
-            onEntriesChange={setActivityEntries}
-          />
+          {activityVisited && (
+            <>
+              <AuditChips tabs={CATEGORY_TABS} active={activityCategory} onPick={setActivityCategory} />
+              <AuditToolbar
+                range={activityRange}
+                onRangeChange={setActivityRange}
+                exportDisabled={activityEntries.length === 0}
+                onExport={() => downloadCSV(activityEntries, `totoggle-${state.applicationName}-activity.csv`)}
+              />
+              <AuditFeed
+                fetchPage={fetchActivityPage}
+                emptyDescription="No changes recorded for this application yet."
+                onEntriesChange={setActivityEntries}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -568,7 +593,7 @@ export function ApplicationDetailScreen() {
       )}
 
       {archivedOpen && state.status === "loaded" && (
-        <ArchivedModal entries={state.archived} onClose={() => setArchivedOpen(false)} onRestore={restoreArchivedEntry} />
+        <ArchivedModal entries={archived} onClose={() => setArchivedOpen(false)} onRestore={restoreArchivedEntry} />
       )}
 
       {suggesting && (
