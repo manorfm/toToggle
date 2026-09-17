@@ -485,10 +485,10 @@ tag in the form `server/vX.Y.Z` to run the release workflow. It runs the server 
 suites, builds the distroless image, publishes it to Docker Hub and creates a GitHub Release.
 
 ```bash
-docker pull <dockerhub-user>/totoggle:1.1.2
+docker pull <dockerhub-user>/totoggle:1.2.0
 docker run --rm -p 3056:3056 \
   -v totoggle-data:/app/db \
-  <dockerhub-user>/totoggle:1.1.2
+  <dockerhub-user>/totoggle:1.2.0
 ```
 
 The workflow requires the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`. The
