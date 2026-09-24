@@ -16,7 +16,7 @@ is branch-protected and requires an approved PR from anyone without write access
 2. **Ready to submit a change?** Fork the repo, branch off `main`, and open a pull request. Small
    fixes/docs typos can skip straight to a PR without an issue first.
 3. Each component in this monorepo is independent (own stack, own tests, own CI workflow — see
-   the root [README](README.md#-architecture)). Only touch what you need to for your change.
+   the root [README](README.md#architecture)). Only touch what you need to for your change.
 4. Make sure the relevant test suite passes before opening the PR:
    ```bash
    cd server && go test ./...              # Go server
